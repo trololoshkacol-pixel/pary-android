@@ -1031,21 +1031,6 @@ private fun PlatonusCard() {
         Spacer(Modifier.height(10.dp))
         ParyTextField(url, { url = it }, "Адрес Платонуса")
         Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("platonus.kstu.kz").forEach { preset ->
-                Text(
-                    "КарТУ",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .clip(MaterialTheme.shapes.small)
-                        .background(MaterialTheme.colorScheme.primaryContainer)
-                        .clickable { url = preset }
-                        .padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
-        }
-        Spacer(Modifier.height(8.dp))
         ParyTextField(login, { login = it }, "Логин")
         Spacer(Modifier.height(8.dp))
         ParyTextField(pass, { pass = it }, "Пароль", password = true)
