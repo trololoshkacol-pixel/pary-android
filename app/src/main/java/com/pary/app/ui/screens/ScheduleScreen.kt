@@ -59,7 +59,6 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     var editing by remember { mutableStateOf<Lesson?>(null) }
     var contextFor by remember { mutableStateOf<Lesson?>(null) }
     var creatingFor by remember { mutableStateOf<Int?>(null) }
-    var confirmSeed by remember { mutableStateOf(false) }
 
     val parity = if (view == 0) Parity.NUM else Parity.DEN
     val todayIdx = today.dayOfWeek.value - 1
@@ -318,22 +317,6 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        item {
-            Text(
-                "Загрузить расписание группы ТАЭС-26-1",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { confirmSeed = true }
-                    .padding(vertical = 12.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            )
-        }
-
         if (all.isEmpty()) {
             item {
                 Text(
@@ -385,24 +368,6 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             },
             dismissButton = {
                 TextButton(onClick = { contextFor = null }) { Text("Отмена") }
-            },
-        )
-    }
-    if (confirmSeed) {
-        AlertDialog(
-            onDismissRequest = { confirmSeed = false },
-            title = { Text("Заменить расписание?") },
-            text = {
-                Text(
-                    "Текущие пары заменятся на расписание группы ТАЭС-26-1 по данным Платонуса, " +
-                        "с иностранным языком в аудитории 514 по пятницам. Ручные правки пропадут.",
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { Store.seedSchedule(); confirmSeed = false }) { Text("Заменить") }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmSeed = false }) { Text("Отмена") }
             },
         )
     }
