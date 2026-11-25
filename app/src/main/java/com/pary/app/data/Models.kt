@@ -247,3 +247,70 @@ data class PlatonusAttendance(
         fun from(o: JSONObject) = PlatonusAttendance(o.optString("k"), o.optString("s"), o.optBoolean("p"), o.optString("status"))
     }
 }
+
+
+// ---------- ручной кредитный журнал ----------
+
+enum class AssessmentKind(val key: String, val label: String) {
+    RATING1("r1", "Рубежный контроль 1"),
+    RATING2("r2", "Рубежный контроль 2"),
+    EXAM("exam", "Экзамен"),
+}
+
+data class AssessmentRecord(
+    val id: Long = newId(),
+    val kind: AssessmentKind = AssessmentKind.RATING1,
+    val title: String = "",
+    val score: Double = 0.0,
+    val maxScore: Double = 100.0,
+    val date: LocalDate = LocalDate.now(),
+    val note: String = "",
+) {
+    val percent: Double get() = if (maxScore > 0.0) (score / maxScore * 100.0).coerceIn(0.0, 100.0) else 0.0
+
+    fun toJson(): JSONObject = JSONObject()
+        .put("id", id).put("kind", kind.key).put("title", title)
+        .put("score", score).put("max", maxScore).put("date", date.toString()).put("note", note)
+
+    companion object {
+        fun from(o: JSONObject): AssessmentRecord = AssessmentRecord(
+            id = o.optLong("id", newId()),
+            kind = AssessmentKind.entries.firstOrNull { it.key == o.optString("kind") } ?: AssessmentKind.RATING1,
+            title = o.optString("title", ""),
+            score = o.optDouble("score", 0.0).coerceAtLeast(0.0),
+            maxScore = o.optDouble("max", 100.0).coerceAtLeast(0.01),
+            date = runCatching { LocalDate.parse(o.optString("date")) }.getOrDefault(LocalDate.now()),
+            note = o.optString("note", ""),
+        )
+    }
+}
+
+data class GradebookSubject(
+    val id: Long = newId(),
+    val subject: String = "",
+    val credits: Int = 3,
+    /** Веса в процентах: стандартная модель 30 + 30 + 40. */
+    val rating1Weight: Int = 30,
+    val rating2Weight: Int = 30,
+    val examWeight: Int = 40,
+    val records: List<AssessmentRecord> = emptyList(),
+) {
+    fun toJson(): JSONObject = JSONObject()
+        .put("id", id).put("subject", subject).put("credits", credits)
+        .put("w1", rating1Weight).put("w2", rating2Weight).put("we", examWeight)
+        .put("records", JSONArray().also { a -> records.forEach { a.put(it.toJson()) } })
+
+    companion object {
+        fun from(o: JSONObject): GradebookSubject = GradebookSubject(
+            id = o.optLong("id", newId()),
+            subject = o.optString("subject", ""),
+            credits = o.optInt("credits", 3).coerceIn(1, 30),
+            rating1Weight = o.optInt("w1", 30).coerceIn(0, 100),
+            rating2Weight = o.optInt("w2", 30).coerceIn(0, 100),
+            examWeight = o.optInt("we", 40).coerceIn(0, 100),
+            records = (0 until (o.optJSONArray("records")?.length() ?: 0)).mapNotNull { i ->
+                o.optJSONArray("records")?.optJSONObject(i)?.let(AssessmentRecord::from)
+            },
+        )
+    }
+}
