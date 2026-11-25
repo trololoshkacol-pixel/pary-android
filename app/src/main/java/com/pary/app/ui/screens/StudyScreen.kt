@@ -39,6 +39,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.pary.app.data.AssessmentKind
+import com.pary.app.data.AssessmentRecord
+import com.pary.app.data.GradebookSubject
 import com.pary.app.data.Exam
 import com.pary.app.data.Grade
 import com.pary.app.data.JournalSubject
@@ -52,6 +55,8 @@ import com.pary.app.ui.ParyCard
 import com.pary.app.ui.Ru
 import com.pary.app.ui.SectionHeader
 import com.pary.app.ui.ThinProgress
+import com.pary.app.ui.dialogs.AssessmentEditorDialog
+import com.pary.app.ui.dialogs.GradebookSubjectDialog
 import com.pary.app.ui.dialogs.ExamEditorDialog
 import com.pary.app.ui.dialogs.GradeEditorDialog
 import com.pary.app.ui.dialogs.NoteEditorDialog
@@ -60,11 +65,14 @@ import com.pary.app.ui.rememberNow
 @Composable
 fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
     val now = rememberNow(60)
-    var section by rememberSaveable { mutableStateOf(initialSection.coerceIn(0, 4)) }
+    var section by rememberSaveable { mutableStateOf(initialSection.coerceIn(0, 5)) }
     var gradeFor by remember { mutableStateOf<Boolean>(false) }
     var examFor by remember { mutableStateOf(false) }
     var noteFor by remember { mutableStateOf(false) }
     var editingExam by remember { mutableStateOf<Exam?>(null) }
+    var showGradebookSubject by remember { mutableStateOf(false) }
+    var editingGradebookSubject by remember { mutableStateOf<GradebookSubject?>(null) }
+    var assessmentFor by remember { mutableStateOf<GradebookSubject?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -79,7 +87,8 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
                 1 -> Store.exams.size
                 2 -> Store.attendance.size
                 3 -> Store.notes.size
-                else -> Store.journal.size
+                4 -> Store.journal.size
+                else -> Store.gradebook.size
             }
             Column(
                 modifier = Modifier
@@ -100,7 +109,7 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    if (section == 0 || section == 1 || section == 3) {
+                    if (section == 0 || section == 1 || section == 3 || section == 5) {
                         Box(
                             modifier = Modifier
                                 .size(46.dp)
@@ -111,6 +120,7 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
                                         0 -> gradeFor = true
                                         1 -> examFor = true
                                         3 -> noteFor = true
+                                        5 -> showGradebookSubject = true
                                     }
                                 },
                             contentAlignment = Alignment.Center,
@@ -149,7 +159,7 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
 
         item {
             ChoiceRow(
-                listOf("Оценки", "Экзамены", "Посещения", "Заметки", "Платонус"),
+                listOf("Оценки", "Экзамены", "Посещения", "Заметки", "Платонус", "Мои баллы"),
                 section,
                 onSelect = { section = it },
             )
@@ -163,7 +173,12 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
             1 -> examsSection(now) { editingExam = it }
             2 -> attendanceSection()
             3 -> notesSection()
-            else -> journalSection()
+            4 -> journalSection()
+            else -> gradebookSection(
+                onAddAssessment = { assessmentFor = it },
+                onEditSubject = { editingGradebookSubject = it },
+                onDeleteAssessment = { subject, record -> Store.deleteAssessment(subject.id, record.id) },
+            )
         }
     }
 
@@ -188,6 +203,26 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
             onDismiss = { editingExam = null },
             onSave = { Store.updateExam(it); editingExam = null },
             onDelete = { Store.deleteExam(e.id); editingExam = null },
+        )
+    }
+    if (showGradebookSubject) {
+        GradebookSubjectDialog(
+            onDismiss = { showGradebookSubject = false },
+            onSave = { Store.addGradebookSubject(it); showGradebookSubject = false },
+        )
+    }
+    editingGradebookSubject?.let { subject ->
+        GradebookSubjectDialog(
+            initial = subject,
+            onDismiss = { editingGradebookSubject = null },
+            onSave = { Store.updateGradebookSubject(it); editingGradebookSubject = null },
+            onDelete = { Store.deleteGradebookSubject(subject.id); editingGradebookSubject = null },
+        )
+    }
+    assessmentFor?.let { subject ->
+        AssessmentEditorDialog(
+            onDismiss = { assessmentFor = null },
+            onSave = { Store.addAssessment(subject.id, it); assessmentFor = null },
         )
     }
     if (noteFor) {
@@ -880,3 +915,97 @@ private fun androidx.compose.foundation.lazy.LazyListScope.journalSection() {
         }
     }
 }
+
+
+private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
+    onAddAssessment: (GradebookSubject) -> Unit,
+    onEditSubject: (GradebookSubject) -> Unit,
+    onDeleteAssessment: (GradebookSubject, AssessmentRecord) -> Unit,
+) {
+    val subjects = Store.gradebook
+    val gpa = Logic.weightedGpa(subjects)
+    item {
+        ParyCard {
+            Text("КРЕДИТНЫЙ ЖУРНАЛ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(gpa?.let { String.format("${ "%.2f", it }") } ?: "—", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text("GPA по завершённым предметам", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text("${subjects.sumOf { it.credits }}", style = MaterialTheme.typography.headlineSmall)
+                    Text("кредитов", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text("Стандартная модель 30 / 30 / 40. Веса и шкалу можно адаптировать под правила твоего университета.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+    if (subjects.isEmpty()) {
+        item {
+            ParyCard {
+                EmptyState(Icons.Filled.Add, "Журнал пока пуст", "Добавь дисциплину, укажи кредиты и вноси баллы за рубежки и экзамен. Данные сохраняются на устройстве.")
+            }
+        }
+    }
+    subjects.sortedBy { it.subject.lowercase() }.forEach { subject ->
+        item(key = "gb_${subject.id}") {
+            val r1 = Logic.assessmentAverage(subject.records, AssessmentKind.RATING1)
+            val r2 = Logic.assessmentAverage(subject.records, AssessmentKind.RATING2)
+            val exam = Logic.assessmentAverage(subject.records, AssessmentKind.EXAM)
+            val current = Logic.gradebookCurrent(subject)
+            val final = Logic.gradebookFinal(subject)
+            ParyCard {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f).clickable { onEditSubject(subject) }) {
+                        Text(subject.subject, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text("${subject.credits} ECTS · веса ${subject.rating1Weight}/${subject.rating2Weight}/${subject.examWeight}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(final?.let { String.format("${ "%.1f", it }") } ?: current?.let { String.format("${ "%.1f", it }") } ?: "—", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(if (final != null) Logic.letterGrade(final).first + " · итог" else "текущий балл", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
+                listOf(
+                    Triple("РК 1", r1, subject.rating1Weight),
+                    Triple("РК 2", r2, subject.rating2Weight),
+                    Triple("Экзамен", exam, subject.examWeight),
+                ).forEach { (label, value, weight) ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(label, modifier = Modifier.width(74.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ThinProgress(((value ?: 0.0) / 100.0).toFloat())
+                        Spacer(Modifier.width(8.dp))
+                        Text(value?.let { "${it.toInt()}%" } ?: "—", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(" · ${weight}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Spacer(Modifier.height(5.dp))
+                }
+                if (subject.records.isNotEmpty()) {
+                    Spacer(Modifier.height(4.dp))
+                    subject.records.sortedByDescending { it.date }.forEach { record ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(record.title, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text("${record.kind.label} · ${Ru.dateShort(record.date)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Text("${formatMark(record.score)}/${formatMark(record.maxScore)}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
+                            Text("×", color = LocalExtra.current.danger, modifier = Modifier.padding(start = 12.dp).clickable { onDeleteAssessment(subject, record) })
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text("＋ Добавить баллы", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.clickable { onAddAssessment(subject) })
+                if (final == null && r1 != null && r2 != null) {
+                    val needed = Logic.requiredExamPercent(subject, 70.0)
+                    if (needed != null) {
+                        Text("Для итоговых 70% на экзамене нужно: ${String.format("%.1f", needed)}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatMark(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString() else String.format("%.1f", value)
