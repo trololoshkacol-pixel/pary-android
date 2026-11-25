@@ -91,6 +91,25 @@ class LogicTest {
     }
 
     @Test
+    fun attendanceTrendGroupsByDateAndKeepsEmptyDays() {
+        val start = LocalDate.of(2026, 11, 20)
+        val records = listOf(
+            com.pary.app.data.Att(key = "2026-11-20@09:00", present = true, subject = "Math"),
+            com.pary.app.data.Att(key = "2026-11-20@11:00", present = false, subject = "Math"),
+            com.pary.app.data.Att(key = "2026-11-22@10:00", present = true, subject = "History"),
+            com.pary.app.data.Att(key = "bad-key", present = false),
+        )
+        val trend = Logic.attendanceTrend(records, start, 3)
+        assertEquals(3, trend.size)
+        assertEquals(1, trend[0].present)
+        assertEquals(1, trend[0].missed)
+        assertEquals(50.0, trend[0].attendancePercent ?: 0.0, 0.001)
+        assertEquals(0, trend[1].total)
+        assertEquals(1, trend[2].present)
+        assertEquals(emptyList<com.pary.app.data.AttendanceDayStats>(), Logic.attendanceTrend(records, start, 0))
+    }
+
+    @Test
     fun averageAndHumanLeft() {
         assertEquals(4.5, Logic.average(listOf(5, 4)) ?: 0.0, 0.001)
         assertEquals(null, Logic.average(emptyList()))
