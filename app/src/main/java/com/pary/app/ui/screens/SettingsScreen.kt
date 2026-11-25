@@ -324,24 +324,20 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         AccentHex.forEachIndexed { i, c ->
-                            val on = true
+                            val on = Store.accent == i
                             Box(
                                 modifier = Modifier
                                     .size(if (on) 36.dp else 30.dp)
                                     .clip(CircleShape)
                                     .background(Color(c))
                                     .then(
-                                        if (on) {
-                                            Modifier.border(
-                                                2.dp,
-                                                MaterialTheme.colorScheme.onSurface,
-                                                CircleShape,
-                                            )
-                                        } else {
-                                            Modifier
-                                        },
+                                        if (on) Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                        else Modifier,
                                     )
-                                    .clickable(enabled = false) { },
+                                    .clickable {
+                                        Store.updateAccent(i)
+                                        Sync.refresh(ctx)
+                                    },
                             )
                         }
                     }
