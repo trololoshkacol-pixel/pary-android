@@ -17,6 +17,7 @@ class LogicTest {
     fun freshInstallDefaultsDoNotContainStudentSpecificData() {
         assertEquals("", com.pary.app.data.AppDefaults.profileGroup)
         assertEquals("", com.pary.app.data.AppDefaults.platonusUrl)
+        assertEquals(false, com.pary.app.data.AppDefaults.watchChatsEnabled)
         assertEquals(emptyList<com.pary.app.data.Lesson>(), com.pary.app.data.AppDefaults.lessons)
     }
 
