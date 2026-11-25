@@ -306,17 +306,20 @@ fun GradebookSubjectDialog(
 
 @Composable
 fun AssessmentEditorDialog(
+    initial: com.pary.app.data.AssessmentRecord? = null,
     onDismiss: () -> Unit,
     onSave: (com.pary.app.data.AssessmentRecord) -> Unit,
 ) {
-    var kindIndex by remember { mutableStateOf(0) }
-    var title by remember { mutableStateOf("") }
-    var score by remember { mutableStateOf("") }
-    var maxScore by remember { mutableStateOf("100") }
-    var note by remember { mutableStateOf("") }
-    var error by remember { mutableStateOf("") }
+    val context = LocalContext.current
     val kinds = com.pary.app.data.AssessmentKind.entries
-    DialogFrame("Добавить баллы", onDismiss) {
+    var kindIndex by remember(initial?.id) { mutableStateOf(kinds.indexOf(initial?.kind).coerceAtLeast(0)) }
+    var title by remember(initial?.id) { mutableStateOf(initial?.title.orEmpty()) }
+    var score by remember(initial?.id) { mutableStateOf(initial?.score?.toString().orEmpty()) }
+    var maxScore by remember(initial?.id) { mutableStateOf(initial?.maxScore?.toString() ?: "100") }
+    var note by remember(initial?.id) { mutableStateOf(initial?.note.orEmpty()) }
+    var date by remember(initial?.id) { mutableStateOf(initial?.date ?: LocalDate.now()) }
+    var error by remember { mutableStateOf("") }
+    DialogFrame(if (initial == null) "Добавить баллы" else "Изменить баллы", onDismiss) {
         Text("Компонент", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(6.dp))
         ChoiceRow(kinds.map { it.label }, kindIndex, onSelect = { kindIndex = it })
@@ -327,6 +330,23 @@ fun AssessmentEditorDialog(
         Spacer(Modifier.height(8.dp))
         ParyTextField(maxScore, { maxScore = it.replace(',', '.').filter { c -> c.isDigit() || c == '.' }.take(8) }, "Максимум баллов")
         Spacer(Modifier.height(8.dp))
+        Text(
+            "Дата: ${Ru.date(date)}",
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    DatePickerDialog(
+                        context,
+                        { _, year, month, day -> date = LocalDate.of(year, month + 1, day) },
+                        date.year,
+                        date.monthValue - 1,
+                        date.dayOfMonth,
+                    ).show()
+                }
+                .padding(vertical = 8.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
         ParyTextField(note, { note = it }, "Комментарий (необязательно)")
         if (error.isNotBlank()) {
             Spacer(Modifier.height(6.dp))
@@ -341,9 +361,10 @@ fun AssessmentEditorDialog(
                 value < 0.0 || value > max -> error = "Баллы должны быть от 0 до максимума"
                 else -> onSave(
                     com.pary.app.data.AssessmentRecord(
+                        id = initial?.id ?: com.pary.app.data.newId(),
                         kind = kinds[kindIndex],
                         title = title.trim().ifBlank { kinds[kindIndex].label },
-                        score = value, maxScore = max, note = note.trim(),
+                        score = value, maxScore = max, date = date, note = note.trim(),
                     ),
                 )
             }
