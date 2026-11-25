@@ -1,5 +1,12 @@
 .gradle/
 .kotlin/
-app/pary.jks
 build/
+app/build/
 local.properties
+
+# Signing material and local credentials
+*.jks
+*.keystore
+*.p12
+*.pfx
+app/pary.jks.b64
