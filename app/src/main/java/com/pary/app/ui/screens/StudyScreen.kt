@@ -73,6 +73,7 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
     var showGradebookSubject by remember { mutableStateOf(false) }
     var editingGradebookSubject by remember { mutableStateOf<GradebookSubject?>(null) }
     var assessmentFor by remember { mutableStateOf<GradebookSubject?>(null) }
+    var editingAssessment by remember { mutableStateOf<Pair<GradebookSubject, AssessmentRecord>?>(null) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -177,6 +178,7 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
             else -> gradebookSection(
                 onAddAssessment = { assessmentFor = it },
                 onEditSubject = { editingGradebookSubject = it },
+                onEditAssessment = { subject, record -> editingAssessment = subject to record },
                 onDeleteAssessment = { subject, record -> Store.deleteAssessment(subject.id, record.id) },
             )
         }
@@ -223,6 +225,13 @@ fun StudyScreen(modifier: Modifier = Modifier, initialSection: Int = 0) {
         AssessmentEditorDialog(
             onDismiss = { assessmentFor = null },
             onSave = { Store.addAssessment(subject.id, it); assessmentFor = null },
+        )
+    }
+    editingAssessment?.let { (subject, record) ->
+        AssessmentEditorDialog(
+            initial = record,
+            onDismiss = { editingAssessment = null },
+            onSave = { Store.updateAssessment(subject.id, it); editingAssessment = null },
         )
     }
     if (noteFor) {
@@ -920,6 +929,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.journalSection() {
 private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
     onAddAssessment: (GradebookSubject) -> Unit,
     onEditSubject: (GradebookSubject) -> Unit,
+    onEditAssessment: (GradebookSubject, AssessmentRecord) -> Unit,
     onDeleteAssessment: (GradebookSubject, AssessmentRecord) -> Unit,
 ) {
     val subjects = Store.gradebook
@@ -963,7 +973,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(final?.let { String.format("%.1f", it) } ?: current?.let { String.format("%.1f", it) } ?: "—", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        Text(if (final != null) Logic.letterGrade(final).first + " · итог" else "текущий балл", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            if (final != null) {
+                                val grade = Logic.letterGrade(final)
+                                "${grade.first} · GPA ${String.format("%.2f", grade.second)} · итог"
+                            } else "предварительно · по внесённым компонентам",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -985,9 +1002,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
                     Spacer(Modifier.height(4.dp))
                     subject.records.sortedByDescending { it.date }.forEach { record ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
+                            Column(Modifier.weight(1f).clickable { onEditAssessment(subject, record) }) {
                                 Text(record.title, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                Text("${record.kind.label} · ${Ru.dateShort(record.date)}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("${record.kind.label} · ${Ru.dateShort(record.date)} · нажми для изменения", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Text("${formatMark(record.score)}/${formatMark(record.maxScore)}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Medium)
                             Text("×", color = LocalExtra.current.danger, modifier = Modifier.padding(start = 12.dp).clickable { onDeleteAssessment(subject, record) })
@@ -999,7 +1016,12 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
                 if (final == null && r1 != null && r2 != null) {
                     val needed = Logic.requiredExamPercent(subject, 70.0)
                     if (needed != null) {
-                        Text("Для итоговых 70% на экзамене нужно: ${String.format("%.1f", needed)}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(
+                            if (needed <= 100.0) "Для итоговых 70% на экзамене нужно: ${String.format("%.1f", needed)}%"
+                            else "Цель 70% недостижима: даже для неё нужно ${String.format("%.1f", needed)}% на экзамене",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (needed <= 100.0) MaterialTheme.colorScheme.onSurfaceVariant else LocalExtra.current.warning,
+                        )
                     }
                 }
             }
