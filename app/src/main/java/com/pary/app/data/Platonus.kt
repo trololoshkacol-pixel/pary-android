@@ -88,7 +88,7 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
     private fun httpHint(code: Int): String = when (code) {
         400 -> "неверный запрос (400)"
         401 -> "сессия истекла или неверный логин/пароль (401)"
-        403 -> "доступ запрещён (403)"
+        403 -> "сервер запретил запрос (403); проверь доступ к API Платонуса у администратора вуза"
         404 -> "по этому адресу нет Платонуса или у него другая версия (404)"
         408, 504 -> "сервер не ответил вовремя ($code)"
         429 -> "слишком много попыток, подожди пару минут (429)"
@@ -199,6 +199,7 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
         if (code < 0) return "Не удалось связаться с сервером ${baseUrl.removePrefix("https://")}: $text"
         val obj = runCatching { JSONObject(text) }.getOrNull()
             ?: return if (code in 200..299) "Сервер ответил не JSON — адрес не похож на Платонус"
+            else if (code == 403) "Сервер запретил запрос авторизации (403). Это ограничение доступа к API, а не подтверждение неверного пароля."
             else "Вход не удался: ${httpHint(code)}"
         val status = obj.optString("login_status")
         if (status != "success") {
