@@ -13,6 +13,14 @@ import java.time.LocalTime
 
 class LogicTest {
 
+    @Test
+    fun freshInstallDefaultsDoNotContainStudentSpecificData() {
+        assertEquals("", com.pary.app.data.AppDefaults.profileGroup)
+        assertEquals("", com.pary.app.data.AppDefaults.platonusUrl)
+        assertEquals(false, com.pary.app.data.AppDefaults.watchChatsEnabled)
+        assertEquals(emptyList<com.pary.app.data.Lesson>(), com.pary.app.data.AppDefaults.lessons)
+    }
+
     private val anchor = LocalDate.of(2026, 11, 16) // понедельник
 
     @Test

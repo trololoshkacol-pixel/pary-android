@@ -10,7 +10,6 @@ import org.json.JSONObject
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
 /**
@@ -20,8 +19,6 @@ import java.time.temporal.TemporalAdjusters
 object Store {
     private const val PREF = "pary"
 
-    /** Платонус Карагандинского технического университета — адрес по умолчанию. */
-    const val DEFAULT_PLATONUS = "platonus.kstu.kz"
     private var sp: SharedPreferences? = null
 
     /** Вызывается после любого изменения данных — чтобы обновить уведомления и виджет. */
@@ -40,7 +37,7 @@ object Store {
     var journalAt by mutableStateOf(0L); private set
     var widgetMode by mutableStateOf("next"); private set
     var chatDrafts by mutableStateOf(emptyList<ChatDraft>()); private set
-    var watchChats by mutableStateOf(true); private set
+    var watchChats by mutableStateOf(AppDefaults.watchChatsEnabled); private set
     var watchedPkgs by mutableStateOf(setOf("com.whatsapp", "org.telegram.messenger")); private set
     var wakeLog by mutableStateOf(emptyList<Int>()); private set
     var brain by mutableStateOf(emptyMap<String, Double>()); private set
@@ -62,7 +59,7 @@ object Store {
     var alarmBefore by mutableStateOf(1440); private set
     var missLimit by mutableStateOf(3); private set
     var profileName by mutableStateOf(""); private set
-    var profileGroup by mutableStateOf("ТАЭС-26-1"); private set
+    var profileGroup by mutableStateOf(AppDefaults.profileGroup); private set
     var afterNote by mutableStateOf(""); private set
     var anchor by mutableStateOf(LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)))
         private set
@@ -83,7 +80,7 @@ object Store {
         if (ready) return
         val s = ctx.applicationContext.getSharedPreferences(PREF, Context.MODE_PRIVATE)
         sp = s
-        lessons = readArray(s.getString("lessons", null), ::lessonFrom).ifEmpty { defaultLessons() }
+        lessons = readArray(s.getString("lessons", null), ::lessonFrom).ifEmpty { AppDefaults.lessons }
         tasks = readArray(s.getString("tasks_v4", null), ::taskFrom)
         grades = readArray(s.getString("grades", null), ::gradeFrom)
         exams = readArray(s.getString("exams", null), ::examFrom)
@@ -109,12 +106,12 @@ object Store {
         alarmBefore = s.getInt("alarmBefore", 1440)
         missLimit = s.getInt("limit", 3)
         profileName = s.getString("pname", "") ?: ""
-        profileGroup = s.getString("pgroup", "ТАЭС-26-1") ?: ""
+        profileGroup = s.getString("pgroup", AppDefaults.profileGroup) ?: AppDefaults.profileGroup
         afterNote = s.getString("note", "") ?: ""
         anchorParity = Parity.ofKey(s.getString("anchorT", "n")).let {
             if (it == Parity.BOTH) Parity.NUM else it
         }
-        platonusUrl = s.getString("plat_url", DEFAULT_PLATONUS) ?: DEFAULT_PLATONUS
+        platonusUrl = s.getString("plat_url", AppDefaults.platonusUrl) ?: AppDefaults.platonusUrl
         platonusLogin = s.getString("plat_login", "") ?: ""
         platonusPassword = Secure.decrypt(s.getString("plat_pass", "") ?: "")
         platonusStatus = s.getString("plat_status", "") ?: ""
@@ -125,7 +122,7 @@ object Store {
         journalAt = s.getLong("journal_at", 0L)
         widgetMode = s.getString("widget_mode", "next") ?: "next"
         chatDrafts = readArray(s.getString("chat_drafts", null), ::chatDraftFrom)
-        watchChats = s.getBoolean("watch_chats", true)
+        watchChats = s.getBoolean("watch_chats", AppDefaults.watchChatsEnabled)
         telegramToken = Secure.decrypt(s.getString("tg_token", "") ?: "")
         telegramAuto = s.getBoolean("tg_auto", false)
         telegramOffset = s.getLong("tg_offset", 0L)
@@ -516,39 +513,3 @@ object Store {
             false
         }
     }
-
-    // ---------- стартовое расписание ----------
-
-    fun seedSchedule() {
-        lessons = defaultLessons()
-        // Сид собран для недели 23.11.2026 — это знаменатель.
-        anchor = LocalDate.of(2026, 11, 23)
-        anchorParity = Parity.DEN
-        persist()
-    }
-
-    /**
-     * Стартовое расписание группы ТАЭС-26-1 (Платонус, КарТУ).
-     * Пары, одинаковые в обе недели, лежат один раз с parity = BOTH — чтобы не было дублей.
-     * В одном дне одного типа недели пары идут по слотам и не пересекаются:
-     * 1) 9:00–10:45, 2) 10:55–12:40, 3) 13:10–14:55, 4) 15:05–16:50, 5) 17:00–18:45.
-     */
-    private fun defaultLessons(): List<Lesson> = listOf(
-        // каждую неделю — и в числителе, и в знаменателе
-        Lesson(day = 0, parity = Parity.BOTH, start = LocalTime.of(13, 10), end = LocalTime.of(14, 55), name = "Физическая культура", room = "Спорткомплекс, спортзал", teacher = "Толеуов Д.Р.", quiet = false),
-        Lesson(day = 3, parity = Parity.BOTH, start = LocalTime.of(10, 55), end = LocalTime.of(12, 40), name = "История Казахстана", room = "корпус №1, 230", teacher = "Нурлигенова З.Н."),
-        Lesson(day = 4, parity = Parity.BOTH, start = LocalTime.of(13, 10), end = LocalTime.of(14, 55), name = "Казахский (Русский) язык", room = "корпус №1, 323", teacher = "Аманжолова Т.А."),
-        Lesson(day = 4, parity = Parity.BOTH, start = LocalTime.of(15, 5), end = LocalTime.of(16, 50), name = "Иностранный язык", room = "514", teacher = ""),
-        Lesson(day = 4, parity = Parity.BOTH, start = LocalTime.of(17, 0), end = LocalTime.of(18, 45), name = "Линал и матан", room = "корпус №1, 314", teacher = "Андрющенко Ю.А."),
-        Lesson(day = 5, parity = Parity.BOTH, start = LocalTime.of(15, 5), end = LocalTime.of(16, 50), name = "Физическая культура", room = "Спорткомплекс, спортзал", teacher = "Толеуов Д.Р.", quiet = false),
-
-        // числитель — неделя 16 ноября 2026
-        Lesson(day = 0, parity = Parity.NUM, start = LocalTime.of(15, 5), end = LocalTime.of(16, 50), name = "Казахский (Русский) язык", room = "корпус №1, 323", teacher = "Аманжолова Т.А."),
-        Lesson(day = 3, parity = Parity.NUM, start = LocalTime.of(9, 0), end = LocalTime.of(10, 45), name = "ИКТ (лаб.)", room = "корпус №1, 257", teacher = "Акылтаева С.Д."),
-        Lesson(day = 3, parity = Parity.NUM, start = LocalTime.of(13, 10), end = LocalTime.of(14, 55), name = "Линал и матан (лек.)", room = "корпус №1, 305", teacher = "Кажикенова С.Ш."),
-        Lesson(day = 3, parity = Parity.NUM, start = LocalTime.of(15, 5), end = LocalTime.of(16, 50), name = "ИКТ (лек.)", room = "Главный корпус, 420", teacher = "Жумакаева К.Н."),
-
-        // знаменатель — неделя 23 ноября 2026
-        Lesson(day = 0, parity = Parity.DEN, start = LocalTime.of(15, 5), end = LocalTime.of(16, 50), name = "ИКТ (лаб.)", room = "корпус №1, 257", teacher = "Акылтаева С.Д."),
-        Lesson(day = 5, parity = Parity.DEN, start = LocalTime.of(13, 10), end = LocalTime.of(14, 55), name = "История Казахстана (лекция)", room = "корпус №1, 209", teacher = "Нурлигенова З.Н."),
-    )}

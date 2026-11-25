@@ -10,3 +10,15 @@ local.properties
 *.p12
 *.pfx
 app/pary.jks.b64
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+secrets.properties
+keystore.properties
+*.b64
+*.pem
+*.key
+*.p8
+*.mobileprovision
