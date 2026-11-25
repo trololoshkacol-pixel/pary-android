@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -83,17 +84,19 @@ fun ParyApp(initialTab: Int = 0) {
 /** Compact Swiss navigation: five academic destinations, with secondary tools grouped under More. */
 @Composable
 private fun ParyDock(tabs: List<TabItem>, selected: Int, onSelect: (Int) -> Unit) {
-    val shape = RoundedCornerShape(topStart = 14.dp, topEnd = 14.dp)
+    val shape = RoundedCornerShape(22.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(0.7.dp, MaterialTheme.colorScheme.outline, shape)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .shadow(12.dp, shape, ambientColor = Color.Black.copy(alpha = 0.12f), spotColor = Color.Black.copy(alpha = 0.16f))
+            .background(MaterialTheme.colorScheme.surface, shape)
+            .border(0.8.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.8f), shape)
             .clip(shape)
-            .padding(horizontal = 5.dp, vertical = 5.dp),
+            .padding(horizontal = 7.dp, vertical = 7.dp),
     ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             tabs.forEachIndexed { index, item ->
                 val active = selected == index
                 val scale by animateFloatAsState(
@@ -105,19 +108,19 @@ private fun ParyDock(tabs: List<TabItem>, selected: Int, onSelect: (Int) -> Unit
                     modifier = Modifier
                         .weight(1f)
                         .scale(scale)
-                        .clip(RoundedCornerShape(9.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .clickable(
                             role = androidx.compose.ui.semantics.Role.Button,
                             onClickLabel = "Открыть раздел ${item.label}",
                         ) { onSelect(index) }
-                        .padding(vertical = 5.dp),
+                        .padding(vertical = 7.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(width = 34.dp, height = 25.dp)
-                            .clip(RoundedCornerShape(7.dp))
+                            .size(width = 42.dp, height = 29.dp)
+                            .clip(RoundedCornerShape(10.dp))
                             .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.11f) else Color.Transparent),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -131,7 +134,7 @@ private fun ParyDock(tabs: List<TabItem>, selected: Int, onSelect: (Int) -> Unit
                     Text(
                         item.label,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 9.sp,
+                            fontSize = 10.sp,
                             fontWeight = if (active) FontWeight.Bold else FontWeight.Medium,
                         ),
                         color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,

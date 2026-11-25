@@ -50,12 +50,12 @@ fun ParyCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(18.dp)
     val base = modifier
         .fillMaxWidth()
         .clip(shape)
         .background(color, shape)
-        .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+        .border(0.8.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.72f), shape)
     val animated = if (LocalExtra.current.animationsEnabled) {
         base.animateContentSize(animationSpec = tween(180))
     } else base
@@ -63,7 +63,7 @@ fun ParyCard(
         animated.clickable(role = Role.Button, onClick = onClick)
     } else animated
     Column(
-        modifier = interactive.padding(horizontal = 15.dp, vertical = 14.dp),
+        modifier = interactive.padding(horizontal = 17.dp, vertical = 16.dp),
         content = content,
     )
 }
@@ -73,12 +73,12 @@ fun SectionHeader(title: String, trailing: String? = null, modifier: Modifier = 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 1.dp, end = 1.dp, bottom = 7.dp, top = 13.dp),
+            .padding(start = 2.dp, end = 2.dp, bottom = 9.dp, top = 17.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            title.uppercase(),
-            style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 0.65.sp),
+            title,
+            style = MaterialTheme.typography.titleSmall.copy(letterSpacing = (-0.15).sp),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
@@ -96,10 +96,10 @@ fun SectionHeader(title: String, trailing: String? = null, modifier: Modifier = 
 fun StatTile(value: String, label: String, tone: Color, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
+            .clip(RoundedCornerShape(17.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.28f), MaterialTheme.shapes.medium)
-            .padding(vertical = 14.dp, horizontal = 10.dp),
+            .border(0.8.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.7f), RoundedCornerShape(17.dp))
+            .padding(vertical = 16.dp, horizontal = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(value, style = MaterialTheme.typography.headlineSmall, color = tone, maxLines = 1)
