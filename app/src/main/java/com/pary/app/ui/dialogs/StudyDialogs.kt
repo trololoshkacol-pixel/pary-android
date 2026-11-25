@@ -312,7 +312,7 @@ fun AssessmentEditorDialog(
 ) {
     val context = LocalContext.current
     val kinds = com.pary.app.data.AssessmentKind.entries
-    var kindIndex by remember(initial?.id) { mutableStateOf(kinds.indexOf(initial?.kind).coerceAtLeast(0)) }
+    var kindIndex by remember(initial?.id) { mutableStateOf(kinds.indexOf(initial?.kind ?: kinds.first()).coerceAtLeast(0)) }
     var title by remember(initial?.id) { mutableStateOf(initial?.title.orEmpty()) }
     var score by remember(initial?.id) { mutableStateOf(initial?.score?.toString().orEmpty()) }
     var maxScore by remember(initial?.id) { mutableStateOf(initial?.maxScore?.toString() ?: "100") }
