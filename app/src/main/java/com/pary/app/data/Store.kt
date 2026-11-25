@@ -519,13 +519,18 @@ object Store {
             val at = readArray(o.optJSONArray("att")?.toString(), { x ->
                 Att(x.optString("k"), x.optBoolean("p", true), x.optString("s"))
             }).filterIsInstance<Att>()
-            if (l.isEmpty() && t.isEmpty() && g.isEmpty() && gb.isEmpty() && ex.isEmpty() && n.isEmpty()) return false
-            lessons = l.ifEmpty { lessons }
-            tasks = t
-            grades = g
-            exams = ex
-            notes = n
-            attendance = at.associateBy { it.key }
+            val hasAnySection = listOf("lessons", "tasks", "grades", "gradebook", "exams", "notes", "att").any(o::has)
+            if (!hasAnySection || (l.isEmpty() && t.isEmpty() && g.isEmpty() && gb.isEmpty() && ex.isEmpty() && n.isEmpty() && at.isEmpty())) return false
+
+            // Partial backups update only the sections they actually contain.
+            // This prevents a gradebook-only backup from erasing tasks, grades or attendance.
+            if (o.has("lessons")) lessons = l
+            if (o.has("tasks")) tasks = t
+            if (o.has("grades")) grades = g
+            if (o.has("gradebook")) gradebook = gb
+            if (o.has("exams")) exams = ex
+            if (o.has("notes")) notes = n
+            if (o.has("att")) attendance = at.associateBy { it.key }
             persist()
             true
         } catch (e: Exception) {
