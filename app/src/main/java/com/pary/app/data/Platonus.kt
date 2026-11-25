@@ -8,6 +8,12 @@ import java.net.URL
 import java.time.LocalTime
 
 /**
+ * A route-level access/method error does not prove that every schedule endpoint
+ * is unavailable: Platonus deployments expose different route sets.
+ */
+internal fun shouldTryNextScheduleEndpoint(code: Int): Boolean = code == 403 || code == 404 || code == 405
+
+/**
  * Неофициальный клиент REST API Платонуса (тот же, что использует
  * мобильное приложение Platonus Student).
  *
@@ -227,12 +233,19 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
         )
         var lastError = "Сервер не вернул расписание"
         var gotScheduleResponse = false
+        val deniedPaths = mutableListOf<String>()
+        val unavailablePaths = mutableListOf<String>()
 
         for (path in paths) {
             val (code, body) = getAuthed(path)
             if (code == 401) return Result(error = "Сессия истекла, войди ещё раз")
-            if (code == 404) {
-                lastError = "Маршрут расписания не найден: $path"
+            if (shouldTryNextScheduleEndpoint(code)) {
+                if (code == 403) deniedPaths += path else unavailablePaths += path
+                lastError = when (code) {
+                    403 -> "Доступ к маршруту расписания запрещён: $path"
+                    404 -> "Маршрут расписания не найден: $path"
+                    else -> "Маршрут расписания не поддерживает GET: $path"
+                }
                 continue
             }
             if (code != 200) {
@@ -254,10 +267,13 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
             lastError = "Ответ $path получен, но пары не распознаны (${keysOf(body)})"
         }
 
-        return Result(
-            error = if (gotScheduleResponse) lastError
-            else "Не найден доступный маршрут расписания. Последняя ошибка: $lastError",
-        )
+        val finalError = when {
+            gotScheduleResponse -> lastError
+            deniedPaths.isNotEmpty() -> "Доступ запрещён для ${deniedPaths.size} маршрутов расписания; остальные не найдены или не поддерживают GET"
+            unavailablePaths.isNotEmpty() -> "Проверено ${unavailablePaths.size} альтернативных маршрутов, ни один не подошёл. Последний ответ: $lastError"
+            else -> "Не найден доступный маршрут расписания. Последняя ошибка: $lastError"
+        }
+        return Result(error = finalError)
     }
 
     private fun keysOf(text: String): String = runCatching {
