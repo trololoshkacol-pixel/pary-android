@@ -142,7 +142,7 @@ class LogicTest {
                 com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 70.0),
             ),
         )
-        assertEquals(80.0, Logic.gradebookFinal(subject) ?: 0.0, 0.001)
+        assertEquals(79.0, Logic.gradebookFinal(subject) ?: 0.0, 0.001)
     }
 
     @Test
@@ -176,7 +176,32 @@ class LogicTest {
                 com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 95.0),
             ),
         )
-        assertEquals(3.2857, Logic.weightedGpa(listOf(completed, second)) ?: 0.0, 0.001)
+        assertEquals(3.05, Logic.weightedGpa(listOf(completed, second)) ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun assessmentAverageUsesTotalEarnedOverTotalPossiblePoints() {
+        val records = listOf(
+            com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 8.0, maxScore = 10.0),
+            com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 18.0, maxScore = 20.0),
+        )
+        assertEquals(86.6667, Logic.assessmentAverage(records, com.pary.app.data.AssessmentKind.RATING1) ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun gradebookRejectsWeightsThatDoNotAddUpToOneHundred() {
+        val subject = com.pary.app.data.GradebookSubject(
+            rating1Weight = 30,
+            rating2Weight = 30,
+            examWeight = 30,
+            records = listOf(
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 80.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING2, score = 80.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 80.0),
+            ),
+        )
+        assertEquals(null, Logic.gradebookFinal(subject))
+        assertEquals(null, Logic.requiredExamPercent(subject, 80.0))
     }
 
     @Test
