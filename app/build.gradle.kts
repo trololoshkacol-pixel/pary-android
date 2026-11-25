@@ -16,6 +16,12 @@ val hasReleaseSigning = !signingStoreFile.isNullOrBlank() &&
     !signingKeyAlias.isNullOrBlank() &&
     !signingKeyPassword.isNullOrBlank()
 
+// CI artifacts receive monotonically increasing version codes so Android can update them.
+val appVersionCode = providers.environmentVariable("GITHUB_RUN_NUMBER").orNull
+    ?.toIntOrNull()
+    ?.coerceIn(9, 2_100_000_000)
+    ?: 9
+
 android {
     namespace = "com.pary.app"
     compileSdk = 34
@@ -24,7 +30,7 @@ android {
         applicationId = "com.pary.app"
         minSdk = 29
         targetSdk = 34
-        versionCode = 9
+        versionCode = appVersionCode
         versionName = "4.5"
     }
 
