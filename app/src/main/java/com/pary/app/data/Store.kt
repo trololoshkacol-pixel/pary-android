@@ -37,7 +37,7 @@ object Store {
     var journalAt by mutableStateOf(0L); private set
     var widgetMode by mutableStateOf("next"); private set
     var chatDrafts by mutableStateOf(emptyList<ChatDraft>()); private set
-    var watchChats by mutableStateOf(true); private set
+    var watchChats by mutableStateOf(AppDefaults.watchChatsEnabled); private set
     var watchedPkgs by mutableStateOf(setOf("com.whatsapp", "org.telegram.messenger")); private set
     var wakeLog by mutableStateOf(emptyList<Int>()); private set
     var brain by mutableStateOf(emptyMap<String, Double>()); private set
@@ -122,7 +122,7 @@ object Store {
         journalAt = s.getLong("journal_at", 0L)
         widgetMode = s.getString("widget_mode", "next") ?: "next"
         chatDrafts = readArray(s.getString("chat_drafts", null), ::chatDraftFrom)
-        watchChats = s.getBoolean("watch_chats", true)
+        watchChats = s.getBoolean("watch_chats", AppDefaults.watchChatsEnabled)
         telegramToken = Secure.decrypt(s.getString("tg_token", "") ?: "")
         telegramAuto = s.getBoolean("tg_auto", false)
         telegramOffset = s.getLong("tg_offset", 0L)
