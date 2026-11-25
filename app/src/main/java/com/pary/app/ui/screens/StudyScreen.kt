@@ -974,7 +974,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
                 ).forEach { (label, value, weight) ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(label, modifier = Modifier.width(74.dp), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ThinProgress(((value ?: 0.0) / 100.0).toFloat())
+                        ThinProgress(((value ?: 0.0) / 100.0).toFloat(), modifier = Modifier.weight(1f))
                         Spacer(Modifier.width(8.dp))
                         Text(value?.let { "${it.toInt()}%" } ?: "—", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(" · ${weight}%", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1007,5 +1007,3 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
     }
 }
 
-private fun formatMark(value: Double): String =
-    if (value % 1.0 == 0.0) value.toInt().toString() else String.format("%.1f", value)
