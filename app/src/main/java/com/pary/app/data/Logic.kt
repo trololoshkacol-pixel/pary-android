@@ -124,4 +124,78 @@ object Logic {
         min >= 60 -> "${min / 60} ч ${min % 60} мин"
         else -> "$min мин"
     }
+
+
+    // ---------- кредитный журнал и расчёт итогов ----------
+
+    fun assessmentAverage(records: List<AssessmentRecord>, kind: AssessmentKind): Double? {
+        val selected = records.filter { it.kind == kind && it.maxScore > 0.0 }
+        if (selected.isEmpty()) return null
+        return selected.map { it.percent }.average().coerceIn(0.0, 100.0)
+    }
+
+    /** Текущий процент с перенормировкой только уже заполненных компонентов. */
+    fun gradebookCurrent(subject: GradebookSubject): Double? {
+        val parts = listOf(
+            assessmentAverage(subject.records, AssessmentKind.RATING1) to subject.rating1Weight,
+            assessmentAverage(subject.records, AssessmentKind.RATING2) to subject.rating2Weight,
+            assessmentAverage(subject.records, AssessmentKind.EXAM) to subject.examWeight,
+        ).filter { it.first != null && it.second > 0 }
+        val weight = parts.sumOf { it.second }
+        if (weight == 0) return null
+        return parts.sumOf { it.first!! * it.second } / weight
+    }
+
+    /** Итог доступен только после заполнения всех компонентов с ненулевым весом. */
+    fun gradebookFinal(subject: GradebookSubject): Double? {
+        val weights = listOf(
+            AssessmentKind.RATING1 to subject.rating1Weight,
+            AssessmentKind.RATING2 to subject.rating2Weight,
+            AssessmentKind.EXAM to subject.examWeight,
+        )
+        if (weights.sumOf { it.second } != 100) return null
+        val parts = weights.map { (kind, weight) ->
+            val avg = assessmentAverage(subject.records, kind)
+            if (weight > 0 && avg == null) return null
+            (avg ?: 0.0) * weight
+        }
+        return parts.sum() / 100.0
+    }
+
+    fun requiredExamPercent(subject: GradebookSubject, targetPercent: Double): Double? {
+        if (subject.examWeight <= 0 || subject.rating1Weight + subject.rating2Weight + subject.examWeight != 100) return null
+        val r1 = assessmentAverage(subject.records, AssessmentKind.RATING1)
+        val r2 = assessmentAverage(subject.records, AssessmentKind.RATING2)
+        if ((subject.rating1Weight > 0 && r1 == null) || (subject.rating2Weight > 0 && r2 == null)) return null
+        val earned = (r1 ?: 0.0) * subject.rating1Weight + (r2 ?: 0.0) * subject.rating2Weight
+        return ((targetPercent.coerceIn(0.0, 100.0) * 100.0 - earned) / subject.examWeight).coerceAtLeast(0.0)
+    }
+
+    /** Типовая буквенная шкала 4.0; пороги подлежат настройке под регламент вуза. */
+    fun letterGrade(percent: Double): Pair<String, Double> {
+        val p = percent.coerceIn(0.0, 100.0)
+        return when {
+            p >= 95.0 -> "A" to 4.0
+            p >= 90.0 -> "A-" to 3.67
+            p >= 85.0 -> "B+" to 3.33
+            p >= 80.0 -> "B" to 3.0
+            p >= 75.0 -> "B-" to 2.67
+            p >= 70.0 -> "C+" to 2.33
+            p >= 65.0 -> "C" to 2.0
+            p >= 60.0 -> "C-" to 1.67
+            p >= 55.0 -> "D+" to 1.33
+            p >= 50.0 -> "D" to 1.0
+            else -> "F" to 0.0
+        }
+    }
+
+    /** GPA взвешивается по кредитам, а не по количеству предметов. */
+    fun weightedGpa(subjects: List<GradebookSubject>): Double? {
+        val completed = subjects.mapNotNull { subject ->
+            gradebookFinal(subject)?.let { subject to it }
+        }
+        val credits = completed.sumOf { it.first.credits }
+        if (credits <= 0) return null
+        return completed.sumOf { (subject, percent) -> letterGrade(percent).second * subject.credits } / credits
+    }
 }
