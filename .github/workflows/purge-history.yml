@@ -1,0 +1,72 @@
+name: One-time public history cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RESET_ALL_GIT_HISTORY to replace Git history and remove old build artifacts
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  cleanup:
+    if: inputs.confirmation == 'RESET_ALL_GIT_HISTORY'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Replace history with one clean snapshot and purge old distribution records
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Preserve the current sanitized tree, but intentionally discard every old commit.
+          git checkout --orphan public-clean
+          git add -A
+          git commit -m "chore: reset history after privacy cleanup"
+          clean_sha="$(git rev-parse HEAD)"
+          git push --force origin "${clean_sha}:refs/heads/main"
+
+          # Remove all non-main branches and tags so they cannot retain old objects.
+          git fetch origin --prune --tags
+          while IFS= read -r ref; do
+            branch="${ref#origin/}"
+            if [[ "$branch" != "main" && "$branch" != "HEAD" ]]; then
+              git push origin --delete "$branch"
+            fi
+          done < <(git for-each-ref --format='%(refname:short)' refs/remotes/origin)
+
+          # Delete releases first (and their associated tags), then any remaining tags.
+          while IFS= read -r tag; do
+            [[ -z "$tag" ]] || gh release delete "$tag" --yes --cleanup-tag
+          done < <(gh release list --limit 1000 --json tagName --jq '.[].tagName')
+
+          git fetch origin --prune --tags
+          while IFS= read -r tag; do
+            [[ -z "$tag" ]] || git push origin --delete "refs/tags/$tag"
+          done < <(git tag --list)
+
+          # Remove APK artifacts and old workflow logs from previous builds.
+          while IFS= read -r artifact_id; do
+            [[ -z "$artifact_id" ]] || gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/$artifact_id"
+          done < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" --jq '.artifacts[].id')
+
+          while IFS= read -r run_id; do
+            if [[ -n "$run_id" && "$run_id" != "$GITHUB_RUN_ID" ]]; then
+              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/runs/$run_id"
+            fi
+          done < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs?per_page=100" --jq '.workflow_runs[].id')
+
+          echo "History reset complete. GitHub Support may still need to dereference affected pull requests and cached views."
