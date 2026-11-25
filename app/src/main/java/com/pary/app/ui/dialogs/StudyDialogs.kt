@@ -249,3 +249,104 @@ fun NoteEditorDialog(
         })
     }
 }
+
+
+@Composable
+fun GradebookSubjectDialog(
+    initial: com.pary.app.data.GradebookSubject? = null,
+    onDismiss: () -> Unit,
+    onSave: (com.pary.app.data.GradebookSubject) -> Unit,
+    onDelete: (() -> Unit)? = null,
+) {
+    var subject by remember { mutableStateOf(initial?.subject ?: "") }
+    var credits by remember { mutableStateOf((initial?.credits ?: 3).toString()) }
+    var r1 by remember { mutableStateOf((initial?.rating1Weight ?: 30).toString()) }
+    var r2 by remember { mutableStateOf((initial?.rating2Weight ?: 30).toString()) }
+    var exam by remember { mutableStateOf((initial?.examWeight ?: 40).toString()) }
+    var error by remember { mutableStateOf("") }
+    DialogFrame(if (initial == null) "Новый предмет" else "Настройки предмета", onDismiss) {
+        ParyTextField(subject, { subject = it }, "Название дисциплины")
+        Spacer(Modifier.height(10.dp))
+        ParyTextField(credits, { credits = it.filter(Char::isDigit).take(2) }, "Кредиты ECTS")
+        Spacer(Modifier.height(12.dp))
+        Text("Вес компонентов · сумма должна быть 100%", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(8.dp))
+        ParyTextField(r1, { r1 = it.filter(Char::isDigit).take(3) }, "Рубежный контроль 1 · %")
+        Spacer(Modifier.height(8.dp))
+        ParyTextField(r2, { r2 = it.filter(Char::isDigit).take(3) }, "Рубежный контроль 2 · %")
+        Spacer(Modifier.height(8.dp))
+        ParyTextField(exam, { exam = it.filter(Char::isDigit).take(3) }, "Экзамен · %")
+        val total = (r1.toIntOrNull() ?: 0) + (r2.toIntOrNull() ?: 0) + (exam.toIntOrNull() ?: 0)
+        Text("Итого: $total%", style = MaterialTheme.typography.labelSmall, color = if (total == 100) MaterialTheme.colorScheme.primary else LocalExtra.current.warning)
+        if (error.isNotBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Text(error, style = MaterialTheme.typography.bodySmall, color = LocalExtra.current.danger)
+        }
+        Spacer(Modifier.height(14.dp))
+        SaveRow(onDismiss = onDismiss, onDelete = onDelete, onSave = {
+            val c = credits.toIntOrNull()
+            val w1 = r1.toIntOrNull()
+            val w2 = r2.toIntOrNull()
+            val we = exam.toIntOrNull()
+            when {
+                subject.isBlank() -> error = "Укажи название дисциплины"
+                c == null || c !in 1..30 -> error = "Количество кредитов: от 1 до 30"
+                w1 == null || w2 == null || we == null || listOf(w1, w2, we).any { it !in 0..100 } -> error = "Проверь веса компонентов"
+                w1 + w2 + we != 100 -> error = "Сумма весов должна быть ровно 100%"
+                else -> onSave(
+                    (initial ?: com.pary.app.data.GradebookSubject()).copy(
+                        subject = subject.trim(), credits = c,
+                        rating1Weight = w1, rating2Weight = w2, examWeight = we,
+                    ),
+                )
+            }
+        })
+    }
+}
+
+@Composable
+fun AssessmentEditorDialog(
+    onDismiss: () -> Unit,
+    onSave: (com.pary.app.data.AssessmentRecord) -> Unit,
+) {
+    var kindIndex by remember { mutableStateOf(0) }
+    var title by remember { mutableStateOf("") }
+    var score by remember { mutableStateOf("") }
+    var maxScore by remember { mutableStateOf("100") }
+    var note by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf("") }
+    val kinds = com.pary.app.data.AssessmentKind.entries
+    DialogFrame("Добавить баллы", onDismiss) {
+        Text("Компонент", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.height(6.dp))
+        ChoiceRow(kinds.map { it.label }, kindIndex, onSelect = { kindIndex = it })
+        Spacer(Modifier.height(10.dp))
+        ParyTextField(title, { title = it }, "Название работы (например, тест №1)")
+        Spacer(Modifier.height(8.dp))
+        ParyTextField(score, { score = it.replace(',', '.').filter { c -> c.isDigit() || c == '.' }.take(8) }, "Набранные баллы")
+        Spacer(Modifier.height(8.dp))
+        ParyTextField(maxScore, { maxScore = it.replace(',', '.').filter { c -> c.isDigit() || c == '.' }.take(8) }, "Максимум баллов")
+        Spacer(Modifier.height(8.dp))
+        ParyTextField(note, { note = it }, "Комментарий (необязательно)")
+        if (error.isNotBlank()) {
+            Spacer(Modifier.height(6.dp))
+            Text(error, style = MaterialTheme.typography.bodySmall, color = LocalExtra.current.danger)
+        }
+        Spacer(Modifier.height(14.dp))
+        SaveRow(onDismiss = onDismiss, onSave = {
+            val value = score.toDoubleOrNull()
+            val max = maxScore.toDoubleOrNull()
+            when {
+                value == null || max == null || max <= 0.0 -> error = "Введи корректные баллы и максимум"
+                value < 0.0 || value > max -> error = "Баллы должны быть от 0 до максимума"
+                else -> onSave(
+                    com.pary.app.data.AssessmentRecord(
+                        kind = kinds[kindIndex],
+                        title = title.trim().ifBlank { kinds[kindIndex].label },
+                        score = value, maxScore = max, note = note.trim(),
+                    ),
+                )
+            }
+        })
+    }
+}
