@@ -497,7 +497,7 @@ object Store {
     // ---------- резервная копия ----------
 
     fun exportJson(): String = JSONObject()
-        .put("version", 4)
+        .put("version", 5)
         .put("lessons", JSONArray().also { a -> lessons.forEach { a.put(it.toJson()) } })
         .put("tasks", JSONArray().also { a -> tasks.forEach { a.put(it.toJson()) } })
         .put("grades", JSONArray().also { a -> grades.forEach { a.put(it.toJson()) } })
@@ -519,7 +519,7 @@ object Store {
             val at = readArray(o.optJSONArray("att")?.toString(), { x ->
                 Att(x.optString("k"), x.optBoolean("p", true), x.optString("s"))
             }).filterIsInstance<Att>()
-            if (l.isEmpty() && t.isEmpty() && g.isEmpty() && ex.isEmpty() && n.isEmpty()) return false
+            if (l.isEmpty() && t.isEmpty() && g.isEmpty() && gb.isEmpty() && ex.isEmpty() && n.isEmpty()) return false
             lessons = l.ifEmpty { lessons }
             tasks = t
             grades = g
