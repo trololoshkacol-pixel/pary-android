@@ -29,6 +29,7 @@ object Store {
     var lessons by mutableStateOf(emptyList<Lesson>()); private set
     var tasks by mutableStateOf(emptyList<Task>()); private set
     var grades by mutableStateOf(emptyList<Grade>()); private set
+    var gradebook by mutableStateOf(emptyList<GradebookSubject>()); private set
     var exams by mutableStateOf(emptyList<Exam>()); private set
     var notes by mutableStateOf(emptyList<Note>()); private set
     var attendance by mutableStateOf(emptyMap<String, Att>()); private set
@@ -83,6 +84,7 @@ object Store {
         lessons = readArray(s.getString("lessons", null), ::lessonFrom).ifEmpty { AppDefaults.lessons }
         tasks = readArray(s.getString("tasks_v4", null), ::taskFrom)
         grades = readArray(s.getString("grades", null), ::gradeFrom)
+        gradebook = readArray(s.getString("gradebook_v1", null), GradebookSubject::from)
         exams = readArray(s.getString("exams", null), ::examFrom)
         notes = readArray(s.getString("notes", null), ::noteFrom)
         attendance = loadAttendance(s)
@@ -351,7 +353,7 @@ object Store {
     fun parityOn(date: LocalDate): Parity = Logic.parityOn(anchor, anchorParity, date)
     fun dayLessons(date: LocalDate): List<Lesson> = Logic.lessonsOn(lessons, date, parityOn(date))
     fun subjects(): List<String> = Logic.subjects(lessons)
-    fun subjectNames(): List<String> = (Logic.subjects(lessons) + grades.map { it.subject } + tasks.map { it.subject })
+    fun subjectNames(): List<String> = (Logic.subjects(lessons) + grades.map { it.subject } + tasks.map { it.subject } + gradebook.map { it.subject })
         .filter { it.isNotBlank() }.distinct().sorted()
 
     // ---------- расписание ----------
@@ -400,6 +402,20 @@ object Store {
 
     fun addGrade(g: Grade) { grades = grades + g; persist() }
     fun deleteGrade(id: Long) { grades = grades.filterNot { it.id == id }; persist() }
+
+    // ---------- ручной кредитный журнал ----------
+    fun addGradebookSubject(subject: GradebookSubject) { gradebook = gradebook + subject; persist() }
+    fun updateGradebookSubject(subject: GradebookSubject) { gradebook = gradebook.map { if (it.id == subject.id) subject else it }; persist() }
+    fun deleteGradebookSubject(id: Long) { gradebook = gradebook.filterNot { it.id == id }; persist() }
+    fun addAssessment(subjectId: Long, record: AssessmentRecord) {
+        gradebook = gradebook.map { if (it.id == subjectId) it.copy(records = it.records + record) else it }; persist()
+    }
+    fun updateAssessment(subjectId: Long, record: AssessmentRecord) {
+        gradebook = gradebook.map { if (it.id == subjectId) it.copy(records = it.records.map { old -> if (old.id == record.id) record else old }) else it }; persist()
+    }
+    fun deleteAssessment(subjectId: Long, recordId: Long) {
+        gradebook = gradebook.map { if (it.id == subjectId) it.copy(records = it.records.filterNot { r -> r.id == recordId }) else it }; persist()
+    }
     fun avgAll(): Double? = Logic.average(grades.map { it.value })
     fun avgBySubject(): Map<String, Double> = grades.groupBy { it.subject }
         .mapValues { (_, v) -> Logic.average(v.map { it.value }) ?: 0.0 }
@@ -435,6 +451,7 @@ object Store {
         e.putString("lessons", JSONArray().also { a -> lessons.forEach { a.put(it.toJson()) } }.toString())
         e.putString("tasks_v4", JSONArray().also { a -> tasks.forEach { a.put(it.toJson()) } }.toString())
         e.putString("grades", JSONArray().also { a -> grades.forEach { a.put(it.toJson()) } }.toString())
+        e.putString("gradebook_v1", JSONArray().also { a -> gradebook.forEach { a.put(it.toJson()) } }.toString())
         e.putString("exams", JSONArray().also { a -> exams.forEach { a.put(it.toJson()) } }.toString())
         e.putString("notes", JSONArray().also { a -> notes.forEach { a.put(it.toJson()) } }.toString())
         e.putString("att", attJson())
@@ -480,10 +497,11 @@ object Store {
     // ---------- резервная копия ----------
 
     fun exportJson(): String = JSONObject()
-        .put("version", 4)
+        .put("version", 5)
         .put("lessons", JSONArray().also { a -> lessons.forEach { a.put(it.toJson()) } })
         .put("tasks", JSONArray().also { a -> tasks.forEach { a.put(it.toJson()) } })
         .put("grades", JSONArray().also { a -> grades.forEach { a.put(it.toJson()) } })
+        .put("gradebook", JSONArray().also { a -> gradebook.forEach { a.put(it.toJson()) } })
         .put("exams", JSONArray().also { a -> exams.forEach { a.put(it.toJson()) } })
         .put("notes", JSONArray().also { a -> notes.forEach { a.put(it.toJson()) } })
         .put("att", JSONArray().also { a -> attendance.values.forEach { a.put(JSONObject().put("k", it.key).put("p", it.present).put("s", it.subject)) } })
@@ -496,11 +514,12 @@ object Store {
             val t = readArray(o.optJSONArray("tasks")?.toString(), ::taskFrom).filterIsInstance<Task>()
             val g = readArray(o.optJSONArray("grades")?.toString(), ::gradeFrom).filterIsInstance<Grade>()
             val ex = readArray(o.optJSONArray("exams")?.toString(), ::examFrom).filterIsInstance<Exam>()
+            val gb = readArray(o.optJSONArray("gradebook")?.toString(), GradebookSubject::from)
             val n = readArray(o.optJSONArray("notes")?.toString(), ::noteFrom).filterIsInstance<Note>()
             val at = readArray(o.optJSONArray("att")?.toString(), { x ->
                 Att(x.optString("k"), x.optBoolean("p", true), x.optString("s"))
             }).filterIsInstance<Att>()
-            if (l.isEmpty() && t.isEmpty() && g.isEmpty() && ex.isEmpty() && n.isEmpty()) return false
+            if (l.isEmpty() && t.isEmpty() && g.isEmpty() && gb.isEmpty() && ex.isEmpty() && n.isEmpty()) return false
             lessons = l.ifEmpty { lessons }
             tasks = t
             grades = g
