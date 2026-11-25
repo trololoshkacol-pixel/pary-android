@@ -11,6 +11,13 @@ private val idGen = AtomicLong(System.currentTimeMillis())
 
 fun newId(): Long = idGen.incrementAndGet()
 
+/** Empty, user-neutral data for a fresh installation. */
+object AppDefaults {
+    const val profileGroup = ""
+    const val platonusUrl = ""
+    val lessons: List<Lesson> = emptyList()
+}
+
 /** b — каждую неделю, n — числитель, d — знаменатель. */
 enum class Parity(val key: String) {
     BOTH("b"), NUM("n"), DEN("d");
