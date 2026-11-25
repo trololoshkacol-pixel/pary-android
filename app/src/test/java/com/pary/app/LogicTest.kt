@@ -129,4 +129,15 @@ class LogicTest {
         assertEquals(null, Logic.nextLesson(listOf(lesson), atEnd))
     }
 
+    @Test
+    fun scheduleEndpointDiscoveryContinuesAfterRouteSpecificErrors() {
+        assertEquals(true, com.pary.app.data.shouldTryNextScheduleEndpoint(403))
+        assertEquals(true, com.pary.app.data.shouldTryNextScheduleEndpoint(404))
+        assertEquals(true, com.pary.app.data.shouldTryNextScheduleEndpoint(405))
+        assertEquals(false, com.pary.app.data.shouldTryNextScheduleEndpoint(200))
+        assertEquals(false, com.pary.app.data.shouldTryNextScheduleEndpoint(401))
+        assertEquals(false, com.pary.app.data.shouldTryNextScheduleEndpoint(500))
+        assertEquals(false, com.pary.app.data.shouldTryNextScheduleEndpoint(-1))
+    }
+
 }
