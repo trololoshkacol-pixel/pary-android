@@ -15,6 +15,7 @@ fun newId(): Long = idGen.incrementAndGet()
 object AppDefaults {
     const val profileGroup = ""
     const val platonusUrl = ""
+    const val watchChatsEnabled = false
     val lessons: List<Lesson> = emptyList()
 }
 
