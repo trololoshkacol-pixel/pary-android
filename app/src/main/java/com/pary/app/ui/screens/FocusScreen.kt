@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,6 +44,8 @@ import com.pary.app.data.Lesson
 import com.pary.app.data.Store
 import com.pary.app.data.Task
 import com.pary.app.ui.ParyCard
+import com.pary.app.ui.ParyBarChart
+import com.pary.app.ui.ParyBarEntry
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 import java.time.LocalTime
@@ -399,32 +403,33 @@ private fun WeekLoadCard() {
     val today = LocalDate.now()
     val open = Store.openTasks()
     val rows = (0..6).map { i ->
-        val d = today.plusDays(i.toLong())
-        val mins = Store.dayLessons(d).sumOf { it.minutes }
-        val due = open.count { it.due?.toLocalDate() == d }
-        Triple(d, mins, due)
+        val date = today.plusDays(i.toLong())
+        val minutes = Store.dayLessons(date).sumOf { it.minutes }
+        val due = open.count { it.due?.toLocalDate() == date }
+        val label = if (i == 0) "Сег" else date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("ru"))
+        val valueLabel = if (minutes == 0) "—" else {
+            val hours = minutes / 60
+            val remainder = minutes % 60
+            if (hours > 0 && remainder > 0) "${hours}ч${remainder}м"
+            else if (hours > 0) "${hours}ч"
+            else "${remainder}м"
+        }
+        ParyBarEntry(
+            label = label,
+            value = minutes.toFloat(),
+            valueLabel = valueLabel,
+            detail = if (due > 0) "${due} зад." else "",
+        )
     }
-    val maxMin = (rows.maxOfOrNull { it.second } ?: 0).coerceAtLeast(1)
 
     FocusCard("Нагрузка на 7 дней") {
-        rows.forEach { (d, mins, due) ->
-            val label = if (d == today) "Сег" else d.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("ru"))
-            val lessonsText = if (mins == 0) "нет пар" else "${mins / 60} ч ${mins % 60} м"
-            val info = if (due > 0) "$lessonsText · задач: $due" else lessonsText
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(label, modifier = Modifier.width(48.dp), style = MaterialTheme.typography.bodyMedium)
-                LinearProgressIndicator(
-                    progress = { mins / maxMin.toFloat() },
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    info,
-                    modifier = Modifier.padding(start = 8.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        Text(
+            "Продолжительность пар по дням. Подпись под днём показывает количество задач с дедлайном.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(10.dp))
+        ParyBarChart(entries = rows, modifier = Modifier.fillMaxWidth(), chartHeight = 132.dp)
     }
 }
 
