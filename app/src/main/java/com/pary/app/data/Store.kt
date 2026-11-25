@@ -353,7 +353,7 @@ object Store {
     fun parityOn(date: LocalDate): Parity = Logic.parityOn(anchor, anchorParity, date)
     fun dayLessons(date: LocalDate): List<Lesson> = Logic.lessonsOn(lessons, date, parityOn(date))
     fun subjects(): List<String> = Logic.subjects(lessons)
-    fun subjectNames(): List<String> = (Logic.subjects(lessons) + grades.map { it.subject } + tasks.map { it.subject })
+    fun subjectNames(): List<String> = (Logic.subjects(lessons) + grades.map { it.subject } + tasks.map { it.subject } + gradebook.map { it.subject })
         .filter { it.isNotBlank() }.distinct().sorted()
 
     // ---------- расписание ----------
