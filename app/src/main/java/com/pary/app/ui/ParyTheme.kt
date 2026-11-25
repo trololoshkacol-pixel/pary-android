@@ -15,9 +15,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Kept for compatibility with the existing appearance settings UI.
-val AccentHex = listOf(0xFFE53935)
-val AccentNames = listOf("Swiss Red")
+// Swiss Modern accents. Indices are persisted in Store and kept stable for backups.
+val AccentHex = listOf(0xFFE53935, 0xFF356AE6, 0xFF27845A, 0xFFD28A24, 0xFF8056C8)
+val AccentNames = listOf("Swiss Red", "Cobalt", "Forest", "Amber", "Violet")
+
+private data class AccentPalette(
+    val light: Color,
+    val dark: Color,
+    val lightContainer: Color,
+    val darkContainer: Color,
+    val lightOnContainer: Color,
+    val darkOnContainer: Color,
+    val tertiary: Color,
+)
+
+private val AccentPalettes = listOf(
+    AccentPalette(Color(0xFFE53935), Color(0xFFFF625B), Color(0xFFFCE7E5), Color(0xFF492321), Color(0xFF7D211D), Color(0xFFFFDAD7), Color(0xFF4778B8)),
+    AccentPalette(Color(0xFF285CCB), Color(0xFF82A8FF), Color(0xFFE4ECFF), Color(0xFF20365F), Color(0xFF183A83), Color(0xFFD9E2FF), Color(0xFF27845A)),
+    AccentPalette(Color(0xFF20764C), Color(0xFF72D6A0), Color(0xFFDDF4E6), Color(0xFF1D4430), Color(0xFF164B30), Color(0xFFBDF2D0), Color(0xFF4778B8)),
+    AccentPalette(Color(0xFF98600E), Color(0xFFFFC46B), Color(0xFFFFEFD5), Color(0xFF4B351A), Color(0xFF68400A), Color(0xFFFFE2B5), Color(0xFF4778B8)),
+    AccentPalette(Color(0xFF7043B5), Color(0xFFC3A0FF), Color(0xFFEFE5FF), Color(0xFF3D2A5A), Color(0xFF4D287F), Color(0xFFEAD7FF), Color(0xFF4778B8)),
+)
 
 data class ExtraColors(
     val success: Color,
@@ -73,20 +91,18 @@ private val ParyShapes = Shapes(
 fun ParyTheme(theme: String, accentIndex: Int, animationsEnabled: Boolean = true, content: @Composable () -> Unit) {
     val isLight = theme == "light"
     val amoled = theme == "amoled"
-    val red = Color(0xFFE53935)
-    val darkRed = Color(0xFFF04444)
-
+    val accent = AccentPalettes.getOrElse(accentIndex) { AccentPalettes.first() }
     val scheme = if (isLight) {
         lightColorScheme(
-            primary = red,
+            primary = accent.light,
             onPrimary = Color.White,
-            primaryContainer = Color(0xFFFCE7E5),
-            onPrimaryContainer = Color(0xFF7D211D),
+            primaryContainer = accent.lightContainer,
+            onPrimaryContainer = accent.lightOnContainer,
             secondary = Color(0xFF62645F),
             onSecondary = Color.White,
             secondaryContainer = Color(0xFFEAEAE5),
             onSecondaryContainer = Color(0xFF252622),
-            tertiary = Color(0xFF4778B8),
+            tertiary = accent.tertiary,
             background = Color(0xFFF5F5F2),
             onBackground = Color(0xFF181818),
             surface = Color(0xFFFFFFFF),
@@ -105,15 +121,15 @@ fun ParyTheme(theme: String, accentIndex: Int, animationsEnabled: Boolean = true
         val surface = if (amoled) Color(0xFF101112) else Color(0xFF252729)
         val surfaceVariant = if (amoled) Color(0xFF191B1C) else Color(0xFF2D3032)
         darkColorScheme(
-            primary = darkRed,
-            onPrimary = Color.White,
-            primaryContainer = Color(0xFF492321),
-            onPrimaryContainer = Color(0xFFFFDAD7),
+            primary = accent.dark,
+            onPrimary = Color(0xFF171819),
+            primaryContainer = accent.darkContainer,
+            onPrimaryContainer = accent.darkOnContainer,
             secondary = Color(0xFFA4A5A5),
             onSecondary = Color(0xFF202122),
             secondaryContainer = surfaceVariant,
             onSecondaryContainer = Color(0xFFF4F4F1),
-            tertiary = Color(0xFF83A9D8),
+            tertiary = accent.tertiary.copy(alpha = 0.9f),
             background = background,
             onBackground = Color(0xFFF4F4F1),
             surface = surface,
