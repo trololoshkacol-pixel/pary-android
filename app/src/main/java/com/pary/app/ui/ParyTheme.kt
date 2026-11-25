@@ -16,8 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 // Kept for compatibility with the existing appearance settings UI.
-val AccentHex = listOf(0xFFE53935)
-val AccentNames = listOf("Swiss Red")
+val AccentHex = listOf(0xFFE5484D, 0xFF4778B8, 0xFF27845A, 0xFFB7791F, 0xFF8B6CC1)
+val AccentNames = listOf("Swiss Red", "Cobalt", "Forest", "Amber", "Violet")
 
 data class ExtraColors(
     val success: Color,
@@ -62,50 +62,50 @@ private val ParyTypography = Typography(
 )
 
 private val ParyShapes = Shapes(
-    extraSmall = RoundedCornerShape(6.dp),
-    small = RoundedCornerShape(9.dp),
-    medium = RoundedCornerShape(13.dp),
-    large = RoundedCornerShape(17.dp),
-    extraLarge = RoundedCornerShape(21.dp),
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(26.dp),
 )
 
 @Composable
 fun ParyTheme(theme: String, accentIndex: Int, animationsEnabled: Boolean = true, content: @Composable () -> Unit) {
     val isLight = theme == "light"
     val amoled = theme == "amoled"
-    val red = Color(0xFFE53935)
-    val darkRed = Color(0xFFF04444)
+    val accent = Color(AccentHex[accentIndex.coerceIn(0, AccentHex.lastIndex)])
+    val accentDark = if (isLight) accent else accent.copy(red = (accent.red * 0.82f).coerceIn(0f, 1f), green = (accent.green * 0.82f).coerceIn(0f, 1f), blue = (accent.blue * 0.82f).coerceIn(0f, 1f))
 
     val scheme = if (isLight) {
         lightColorScheme(
-            primary = red,
+            primary = accent,
             onPrimary = Color.White,
-            primaryContainer = Color(0xFFFCE7E5),
-            onPrimaryContainer = Color(0xFF7D211D),
+            primaryContainer = accent.copy(alpha = 0.13f),
+            onPrimaryContainer = accent.copy(red = 0.48f, green = 0.12f, blue = 0.12f),
             secondary = Color(0xFF62645F),
             onSecondary = Color.White,
             secondaryContainer = Color(0xFFEAEAE5),
             onSecondaryContainer = Color(0xFF252622),
             tertiary = Color(0xFF4778B8),
-            background = Color(0xFFF5F5F2),
+            background = Color(0xFFF3F4F6),
             onBackground = Color(0xFF181818),
             surface = Color(0xFFFFFFFF),
             onSurface = Color(0xFF181818),
-            surfaceVariant = Color(0xFFF0F0EC),
+            surfaceVariant = Color(0xFFE9ECF1),
             onSurfaceVariant = Color(0xFF777777),
-            outline = Color(0xFFE5E5E0),
-            outlineVariant = Color(0xFFECECE7),
+            outline = Color(0xFFE1E5EB),
+            outlineVariant = Color(0xFFEAEDF2),
             error = Color(0xFFD94343),
             onError = Color.White,
             errorContainer = Color(0xFFFFE8E6),
             onErrorContainer = Color(0xFF7D211D),
         )
     } else {
-        val background = if (amoled) Color.Black else Color(0xFF171819)
-        val surface = if (amoled) Color(0xFF101112) else Color(0xFF252729)
-        val surfaceVariant = if (amoled) Color(0xFF191B1C) else Color(0xFF2D3032)
+        val background = if (amoled) Color.Black else Color(0xFF101318)
+        val surface = if (amoled) Color(0xFF090B0E) else Color(0xFF191F27)
+        val surfaceVariant = if (amoled) Color(0xFF14181E) else Color(0xFF232C37)
         darkColorScheme(
-            primary = darkRed,
+            primary = accentDark,
             onPrimary = Color.White,
             primaryContainer = Color(0xFF492321),
             onPrimaryContainer = Color(0xFFFFDAD7),
@@ -134,7 +134,7 @@ fun ParyTheme(theme: String, accentIndex: Int, animationsEnabled: Boolean = true
         warning = Color(0xFFD99A32),
         danger = Color(0xFFD94343),
         cardAlt = scheme.surfaceVariant,
-        accentSoft = scheme.primary.copy(alpha = if (isLight) 0.10f else 0.17f),
+        accentSoft = scheme.primary.copy(alpha = if (isLight) 0.11f else 0.19f),
         isLight = isLight,
         heroEnd = scheme.surface,
         animationsEnabled = animationsEnabled,
