@@ -250,7 +250,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             Column(Modifier.fillMaxWidth()) {
                 SectionHeader("Внешний вид")
                 Text(
-                    "Пять тем, десять акцентов и управление анимациями.",
+                    "Три режима оформления, пять акцентов и управление анимациями.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -324,7 +324,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         AccentHex.forEachIndexed { i, c ->
-                            val on = true
+                            val on = Store.accent == i
                             Box(
                                 modifier = Modifier
                                     .size(if (on) 36.dp else 30.dp)
@@ -341,7 +341,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                                             Modifier
                                         },
                                     )
-                                    .clickable(enabled = false) { },
+                                    .clickable { Store.updateAccent(i); Sync.refresh(ctx) },
                             )
                         }
                     }
