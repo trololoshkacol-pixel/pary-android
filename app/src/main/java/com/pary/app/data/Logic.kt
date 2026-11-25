@@ -133,7 +133,7 @@ object Logic {
         if (selected.isEmpty()) return null
         val earned = selected.sumOf { it.score }
         val possible = selected.sumOf { it.maxScore }
-        if (possible <= 0.0) null else (earned / possible * 100.0).coerceIn(0.0, 100.0)
+        return if (possible <= 0.0) null else (earned / possible * 100.0).coerceIn(0.0, 100.0)
     }
 
     /** Текущий процент с перенормировкой только уже заполненных компонентов. */
