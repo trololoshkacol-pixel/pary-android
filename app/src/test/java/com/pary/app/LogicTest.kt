@@ -129,4 +129,60 @@ class LogicTest {
         assertEquals(null, Logic.nextLesson(listOf(lesson), atEnd))
     }
 
+
+
+    @Test
+    fun gradebookUsesWeightedR1R2AndExamScores() {
+        val subject = com.pary.app.data.GradebookSubject(
+            subject = "Математика",
+            credits = 5,
+            records = listOf(
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 80.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING2, score = 90.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 70.0),
+            ),
+        )
+        assertEquals(80.0, Logic.gradebookFinal(subject) ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun gradebookCurrentShowsProvisionalAverageUntilExamIsEntered() {
+        val subject = com.pary.app.data.GradebookSubject(
+            records = listOf(
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 80.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING2, score = 90.0),
+            ),
+        )
+        assertEquals(85.0, Logic.gradebookCurrent(subject) ?: 0.0, 0.001)
+        assertEquals(null, Logic.gradebookFinal(subject))
+    }
+
+    @Test
+    fun requiredExamScoreAndCreditWeightedGpaAreCorrect() {
+        val first = com.pary.app.data.GradebookSubject(
+            subject = "Математика", credits = 5,
+            records = listOf(
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 80.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING2, score = 90.0),
+            ),
+        )
+        assertEquals(85.0, Logic.requiredExamPercent(first, 80.0) ?: 0.0, 0.001)
+        val completed = first.copy(records = first.records + com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 70.0))
+        val second = com.pary.app.data.GradebookSubject(
+            subject = "История", credits = 2,
+            records = listOf(
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING1, score = 95.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING2, score = 95.0),
+                com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 95.0),
+            ),
+        )
+        assertEquals(4.0, Logic.weightedGpa(listOf(completed, second)) ?: 0.0, 0.001)
+    }
+
+    @Test
+    fun assessmentPercentNormalizesDifferentMaximumScores() {
+        val record = com.pary.app.data.AssessmentRecord(score = 18.0, maxScore = 20.0)
+        assertEquals(90.0, record.percent, 0.001)
+        assertEquals("A-", Logic.letterGrade(92.0).first)
+    }
 }
