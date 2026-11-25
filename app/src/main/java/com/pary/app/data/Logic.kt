@@ -131,7 +131,9 @@ object Logic {
     fun assessmentAverage(records: List<AssessmentRecord>, kind: AssessmentKind): Double? {
         val selected = records.filter { it.kind == kind && it.maxScore > 0.0 }
         if (selected.isEmpty()) return null
-        return selected.map { it.percent }.average().coerceIn(0.0, 100.0)
+        val earned = selected.sumOf { it.score }
+        val possible = selected.sumOf { it.maxScore }
+        if (possible <= 0.0) null else (earned / possible * 100.0).coerceIn(0.0, 100.0)
     }
 
     /** Текущий процент с перенормировкой только уже заполненных компонентов. */
