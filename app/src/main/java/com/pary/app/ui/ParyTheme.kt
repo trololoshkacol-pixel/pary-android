@@ -75,13 +75,14 @@ fun ParyTheme(theme: String, accentIndex: Int, animationsEnabled: Boolean = true
     val amoled = theme == "amoled"
     val accent = Color(AccentHex[accentIndex.coerceIn(0, AccentHex.lastIndex)])
     val accentDark = if (isLight) accent else accent.copy(red = (accent.red * 0.82f).coerceIn(0f, 1f), green = (accent.green * 0.82f).coerceIn(0f, 1f), blue = (accent.blue * 0.82f).coerceIn(0f, 1f))
+    val accentInk = accent.copy(red = accent.red * 0.52f, green = accent.green * 0.52f, blue = accent.blue * 0.52f)
 
     val scheme = if (isLight) {
         lightColorScheme(
             primary = accent,
             onPrimary = Color.White,
             primaryContainer = accent.copy(alpha = 0.13f),
-            onPrimaryContainer = accent.copy(red = 0.48f, green = 0.12f, blue = 0.12f),
+            onPrimaryContainer = accentInk,
             secondary = Color(0xFF62645F),
             onSecondary = Color.White,
             secondaryContainer = Color(0xFFEAEAE5),
@@ -107,8 +108,8 @@ fun ParyTheme(theme: String, accentIndex: Int, animationsEnabled: Boolean = true
         darkColorScheme(
             primary = accentDark,
             onPrimary = Color.White,
-            primaryContainer = Color(0xFF492321),
-            onPrimaryContainer = Color(0xFFFFDAD7),
+            primaryContainer = accentDark.copy(alpha = 0.22f),
+            onPrimaryContainer = accent.copy(alpha = 0.96f),
             secondary = Color(0xFFA4A5A5),
             onSecondary = Color(0xFF202122),
             secondaryContainer = surfaceVariant,
