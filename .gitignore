@@ -1,0 +1,5 @@
+.gradle/
+.kotlin/
+app/pary.jks
+build/
+local.properties

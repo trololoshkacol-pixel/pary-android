@@ -1,0 +1,72 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: pary-build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Configure optional release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PARY_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.PARY_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.PARY_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.PARY_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > app/pary-release.jks
+            {
+              echo "PARY_STORE_FILE=app/pary-release.jks"
+              echo "PARY_STORE_PASSWORD=$STORE_PASSWORD"
+              echo "PARY_KEY_ALIAS=$KEY_ALIAS"
+              echo "PARY_KEY_PASSWORD=$KEY_PASSWORD"
+            } >> "$GITHUB_ENV"
+            echo "Release signing configured."
+          else
+            echo "Signing secrets are not configured; release APK will be unsigned."
+          fi
+
+      - name: Run unit tests
+        run: gradle testDebugUnitTest --no-daemon --console=plain
+
+      - name: Build APKs
+        run: gradle assembleDebug assembleRelease --no-daemon --console=plain
+
+      - name: Upload APK artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pary-apk
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/outputs/apk/release/*.apk
