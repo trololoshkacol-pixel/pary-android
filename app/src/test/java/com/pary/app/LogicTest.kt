@@ -98,4 +98,35 @@ class LogicTest {
         assertEquals("1 ч 30 мин", Logic.humanLeft(now.plusMinutes(90), now))
         assertEquals("2 д", Logic.humanLeft(now.plusDays(2), now))
     }
+    @Test
+    fun currentLessonFindsEarliestMatchingLessonEvenWhenInputIsUnsorted() {
+        val now = LocalDateTime.of(2026, 11, 23, 10, 15)
+        val later = Lesson(start = LocalTime.of(11, 0), end = LocalTime.of(12, 30), name = "Позже")
+        val current = Lesson(start = LocalTime.of(10, 0), end = LocalTime.of(11, 30), name = "Сейчас")
+        val earlierEnded = Lesson(start = LocalTime.of(8, 0), end = LocalTime.of(9, 30), name = "Раньше")
+
+        assertEquals("Сейчас", Logic.currentLesson(listOf(later, earlierEnded, current), now)?.name)
+    }
+
+    @Test
+    fun nextLessonFindsNearestFutureLessonEvenWhenInputIsUnsorted() {
+        val now = LocalDateTime.of(2026, 11, 23, 10, 15)
+        val far = Lesson(start = LocalTime.of(14, 0), end = LocalTime.of(15, 30), name = "Далеко")
+        val nearest = Lesson(start = LocalTime.of(11, 0), end = LocalTime.of(12, 30), name = "Ближайшая")
+        val ended = Lesson(start = LocalTime.of(9, 0), end = LocalTime.of(10, 0), name = "Закончилась")
+
+        assertEquals("Ближайшая", Logic.nextLesson(listOf(far, ended, nearest), now)?.name)
+    }
+
+    @Test
+    fun lessonLookupRespectsStartInclusiveAndEndExclusiveBoundaries() {
+        val lesson = Lesson(start = LocalTime.of(10, 0), end = LocalTime.of(11, 30), name = "Пара")
+        val atStart = LocalDateTime.of(2026, 11, 23, 10, 0)
+        val atEnd = LocalDateTime.of(2026, 11, 23, 11, 30)
+
+        assertEquals("Пара", Logic.currentLesson(listOf(lesson), atStart)?.name)
+        assertEquals(null, Logic.currentLesson(listOf(lesson), atEnd))
+        assertEquals(null, Logic.nextLesson(listOf(lesson), atEnd))
+    }
+
 }
