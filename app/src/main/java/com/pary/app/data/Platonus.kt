@@ -8,6 +8,12 @@ import java.net.URL
 import java.time.LocalTime
 
 /**
+ * A route-level access/method error does not prove that every schedule endpoint
+ * is unavailable: Platonus deployments expose different route sets.
+ */
+internal fun shouldTryNextScheduleEndpoint(code: Int): Boolean = code == 403 || code == 404 || code == 405
+
+/**
  * Неофициальный клиент REST API Платонуса (тот же, что использует
  * мобильное приложение Platonus Student).
  *
@@ -82,7 +88,7 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
     private fun httpHint(code: Int): String = when (code) {
         400 -> "неверный запрос (400)"
         401 -> "сессия истекла или неверный логин/пароль (401)"
-        403 -> "доступ запрещён (403)"
+        403 -> "сервер запретил запрос (403); проверь доступ к API Платонуса у администратора вуза"
         404 -> "по этому адресу нет Платонуса или у него другая версия (404)"
         408, 504 -> "сервер не ответил вовремя ($code)"
         429 -> "слишком много попыток, подожди пару минут (429)"
@@ -193,6 +199,7 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
         if (code < 0) return "Не удалось связаться с сервером ${baseUrl.removePrefix("https://")}: $text"
         val obj = runCatching { JSONObject(text) }.getOrNull()
             ?: return if (code in 200..299) "Сервер ответил не JSON — адрес не похож на Платонус"
+            else if (code == 403) "Сервер запретил запрос авторизации (403). Это ограничение доступа к API, а не подтверждение неверного пароля."
             else "Вход не удался: ${httpHint(code)}"
         val status = obj.optString("login_status")
         if (status != "success") {
@@ -227,12 +234,19 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
         )
         var lastError = "Сервер не вернул расписание"
         var gotScheduleResponse = false
+        val deniedPaths = mutableListOf<String>()
+        val unavailablePaths = mutableListOf<String>()
 
         for (path in paths) {
             val (code, body) = getAuthed(path)
             if (code == 401) return Result(error = "Сессия истекла, войди ещё раз")
-            if (code == 404) {
-                lastError = "Маршрут расписания не найден: $path"
+            if (shouldTryNextScheduleEndpoint(code)) {
+                if (code == 403) deniedPaths += path else unavailablePaths += path
+                lastError = when (code) {
+                    403 -> "Доступ к маршруту расписания запрещён: $path"
+                    404 -> "Маршрут расписания не найден: $path"
+                    else -> "Маршрут расписания не поддерживает GET: $path"
+                }
                 continue
             }
             if (code != 200) {
@@ -254,10 +268,13 @@ class Platonus(private val baseUrlRaw: String, private val login: String, privat
             lastError = "Ответ $path получен, но пары не распознаны (${keysOf(body)})"
         }
 
-        return Result(
-            error = if (gotScheduleResponse) lastError
-            else "Не найден доступный маршрут расписания. Последняя ошибка: $lastError",
-        )
+        val finalError = when {
+            gotScheduleResponse -> lastError
+            deniedPaths.isNotEmpty() -> "Доступ запрещён для ${deniedPaths.size} маршрутов расписания; остальные не найдены или не поддерживают GET"
+            unavailablePaths.isNotEmpty() -> "Проверено ${unavailablePaths.size} альтернативных маршрутов, ни один не подошёл. Последний ответ: $lastError"
+            else -> "Не найден доступный маршрут расписания. Последняя ошибка: $lastError"
+        }
+        return Result(error = finalError)
     }
 
     private fun keysOf(text: String): String = runCatching {
