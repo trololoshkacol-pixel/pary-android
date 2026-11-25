@@ -54,10 +54,14 @@ object Logic {
     }
 
     fun currentLesson(day: List<Lesson>, now: LocalDateTime): Lesson? =
-        day.firstOrNull { !it.start.isAfter(now.toLocalTime()) && now.toLocalTime().isBefore(it.end) }
+        day.asSequence()
+            .sortedBy { it.start }
+            .firstOrNull { !it.start.isAfter(now.toLocalTime()) && now.toLocalTime().isBefore(it.end) }
 
     fun nextLesson(day: List<Lesson>, now: LocalDateTime): Lesson? =
-        day.firstOrNull { it.start.isAfter(now.toLocalTime()) }
+        day.asSequence()
+            .filter { it.start.isAfter(now.toLocalTime()) }
+            .minByOrNull { it.start }
 
     fun subjects(all: List<Lesson>): List<String> =
         all.map { it.subject }.filter { it.isNotBlank() }.distinct().sorted()
