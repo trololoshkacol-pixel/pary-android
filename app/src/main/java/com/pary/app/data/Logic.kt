@@ -16,6 +16,11 @@ data class Att(
     val time: LocalTime? get() = key.substringAfter("@", "").let { runCatching { LocalTime.parse(it) }.getOrNull() }
 }
 
+data class AttendanceDayStats(val date: LocalDate, val present: Int, val missed: Int) {
+    val total: Int get() = present + missed
+    val attendancePercent: Double? get() = if (total == 0) null else present * 100.0 / total
+}
+
 enum class TaskBucket { OVERDUE, TODAY, TOMORROW, LATER, DONE }
 
 /** Чистая логика без Android — её проверяют unit-тесты. */
@@ -75,6 +80,17 @@ object Logic {
             out[s] = if (a.present) cur.first + 1 to cur.second else cur.first to cur.second + 1
         }
         return out
+    }
+
+    /** Статистика по календарным дням; пустые дни сохраняются, некорректные ключи игнорируются. */
+    fun attendanceTrend(attendance: Collection<Att>, from: LocalDate, days: Int): List<AttendanceDayStats> {
+        if (days <= 0) return emptyList()
+        val grouped = attendance.mapNotNull { record -> record.date?.let { it to record } }.groupBy({ it.first }, { it.second })
+        return (0 until days).map { offset ->
+            val date = from.plusDays(offset.toLong())
+            val records = grouped[date].orEmpty()
+            AttendanceDayStats(date, records.count { it.present }, records.count { !it.present })
+        }
     }
 
     fun average(values: List<Int>): Double? =
