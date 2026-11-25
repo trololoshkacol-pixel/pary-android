@@ -55,7 +55,7 @@ jobs:
 
           git fetch origin --prune --tags
           while IFS= read -r tag; do
-            [[ -z "$tag" ]] || git push origin --delete "refs/tags/$tag"
+            [[ -z "$tag" ]] || git push origin --delete "refs/tags/$tag" || true
           done < <(git tag --list)
 
           # Remove APK artifacts and old workflow logs from previous builds.
