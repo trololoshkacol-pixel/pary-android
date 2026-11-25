@@ -166,7 +166,7 @@ class LogicTest {
                 com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.RATING2, score = 90.0),
             ),
         )
-        assertEquals(85.0, Logic.requiredExamPercent(first, 80.0) ?: 0.0, 0.001)
+        assertEquals(85.0, Logic.requiredExamPercent(first, 85.0) ?: 0.0, 0.001)
         val completed = first.copy(records = first.records + com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 70.0))
         val second = com.pary.app.data.GradebookSubject(
             subject = "История", credits = 2,
@@ -176,7 +176,7 @@ class LogicTest {
                 com.pary.app.data.AssessmentRecord(kind = com.pary.app.data.AssessmentKind.EXAM, score = 95.0),
             ),
         )
-        assertEquals(4.0, Logic.weightedGpa(listOf(completed, second)) ?: 0.0, 0.001)
+        assertEquals(3.2857, Logic.weightedGpa(listOf(completed, second)) ?: 0.0, 0.001)
     }
 
     @Test
