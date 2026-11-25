@@ -428,14 +428,23 @@ private fun Header(today: LocalDate, day: List<Lesson>) {
 @Composable
 private fun Hero(cur: Lesson?, next: Lesson?, today: LocalDate, now: LocalDateTime) {
     val accent = MaterialTheme.colorScheme.primary
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(22.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape)
-            .background(MaterialTheme.colorScheme.surface)
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .padding(17.dp),
+            .background(
+                Brush.linearGradient(
+                    listOf(
+                        accent.copy(alpha = if (LocalExtra.current.isLight) 0.075f else 0.16f),
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.surface,
+                    ),
+                ),
+                shape,
+            )
+            .border(1.dp, accent.copy(alpha = 0.20f), shape)
+            .padding(20.dp),
     ) {
         when {
             cur != null -> {
