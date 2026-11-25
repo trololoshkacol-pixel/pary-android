@@ -930,7 +930,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
             Spacer(Modifier.height(6.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text(gpa?.let { String.format("${ "%.2f", it }") } ?: "—", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    Text(gpa?.let { String.format("%.2f", it) } ?: "—", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                     Text("GPA по завершённым предметам", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.End) {
@@ -962,7 +962,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
                         Text("${subject.credits} ECTS · веса ${subject.rating1Weight}/${subject.rating2Weight}/${subject.examWeight}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text(final?.let { String.format("${ "%.1f", it }") } ?: current?.let { String.format("${ "%.1f", it }") } ?: "—", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        Text(final?.let { String.format("%.1f", it) } ?: current?.let { String.format("${ "%.1f", it }") } ?: "—", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                         Text(if (final != null) Logic.letterGrade(final).first + " · итог" else "текущий балл", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
