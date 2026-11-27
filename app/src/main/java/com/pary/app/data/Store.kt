@@ -52,6 +52,7 @@ object Store {
     var focusTodayMin by mutableStateOf(0); private set
     var focusTodaySessions by mutableStateOf(0); private set
     var focusGoalMin by mutableStateOf(90); private set
+    var focusSessions by mutableStateOf(emptyList<FocusSession>()); private set
     private var focusDate = LocalDate.now().toString()
     var animations by mutableStateOf(true); private set
     var silentMode by mutableStateOf(true); private set
@@ -95,6 +96,8 @@ object Store {
         focusDate = s.getString("focus_date", LocalDate.now().toString()) ?: LocalDate.now().toString()
         focusTodayMin = s.getInt("focus_today_min", 0).coerceAtLeast(0)
         focusTodaySessions = s.getInt("focus_today_sessions", 0).coerceAtLeast(0)
+        focusSessions = readArray(s.getString("focus_sessions_v1", null), FocusSession::from)
+            .filterNotNull().sortedBy { it.completedAt }.takeLast(500)
         focusGoalMin = s.getInt("focus_goal_min", 90).coerceIn(15, 480)
         if (focusDate != LocalDate.now().toString()) {
             focusDate = LocalDate.now().toString()
@@ -192,7 +195,8 @@ object Store {
     fun updateFocusGoal(minutes: Int) { focusGoalMin = minutes.coerceIn(15, 480); persist() }
     fun recordFocusSession(minutes: Int) {
         if (minutes !in 1..240) return
-        val today = LocalDate.now().toString()
+        val completedAt = LocalDateTime.now()
+        val today = completedAt.toLocalDate().toString()
         if (focusDate != today) {
             focusDate = today
             focusTodayMin = 0
@@ -200,6 +204,8 @@ object Store {
         }
         focusTodayMin += minutes
         focusTodaySessions += 1
+        focusSessions = (focusSessions + FocusSession(completedAt = completedAt, minutes = minutes))
+            .sortedBy { it.completedAt }.takeLast(500)
         persist()
     }
     fun updateAnimations(v: Boolean) { animations = v; persist() }
@@ -474,6 +480,7 @@ object Store {
         e.putString("plat_status", platonusStatus)
             .putString("plat_gpa", platonusGpa).putString("plat_name", platonusName)
             .putString("plat_group", platonusGroup)
+        e.putString("focus_sessions_v1", JSONArray().also { a -> focusSessions.forEach { a.put(it.toJson()) } }.toString())
         e.putString("theme", theme).putInt("accent", accent).putBoolean("anim", animations)
             .putString("focus_date", focusDate).putInt("focus_today_min", focusTodayMin)
             .putInt("focus_today_sessions", focusTodaySessions).putInt("focus_goal_min", focusGoalMin)
@@ -497,7 +504,8 @@ object Store {
     // ---------- резервная копия ----------
 
     fun exportJson(): String = JSONObject()
-        .put("version", 5)
+        .put("version", 6)
+        .put("focusSessions", JSONArray().also { a -> focusSessions.forEach { a.put(it.toJson()) } })
         .put("lessons", JSONArray().also { a -> lessons.forEach { a.put(it.toJson()) } })
         .put("tasks", JSONArray().also { a -> tasks.forEach { a.put(it.toJson()) } })
         .put("grades", JSONArray().also { a -> grades.forEach { a.put(it.toJson()) } })
@@ -519,8 +527,9 @@ object Store {
             val at = readArray(o.optJSONArray("att")?.toString(), { x ->
                 Att(x.optString("k"), x.optBoolean("p", true), x.optString("s"))
             }).filterIsInstance<Att>()
-            val hasAnySection = listOf("lessons", "tasks", "grades", "gradebook", "exams", "notes", "att").any(o::has)
-            if (!hasAnySection || (l.isEmpty() && t.isEmpty() && g.isEmpty() && gb.isEmpty() && ex.isEmpty() && n.isEmpty() && at.isEmpty())) return false
+            val fs = readArray(o.optJSONArray("focusSessions")?.toString(), FocusSession::from).filterNotNull()
+            val hasAnySection = listOf("lessons", "tasks", "grades", "gradebook", "exams", "notes", "att", "focusSessions").any(o::has)
+            if (!hasAnySection || (l.isEmpty() && t.isEmpty() && g.isEmpty() && gb.isEmpty() && ex.isEmpty() && n.isEmpty() && at.isEmpty() && fs.isEmpty())) return false
 
             // Partial backups update only the sections they actually contain.
             // This prevents a gradebook-only backup from erasing tasks, grades or attendance.
@@ -531,6 +540,7 @@ object Store {
             if (o.has("exams")) exams = ex
             if (o.has("notes")) notes = n
             if (o.has("att")) attendance = at.associateBy { it.key }
+            if (o.has("focusSessions")) focusSessions = fs.sortedBy { it.completedAt }.takeLast(500)
             persist()
             true
         } catch (e: Exception) {
