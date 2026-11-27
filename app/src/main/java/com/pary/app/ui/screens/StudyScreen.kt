@@ -52,6 +52,8 @@ import com.pary.app.ui.ChoiceRow
 import com.pary.app.ui.EmptyState
 import com.pary.app.ui.LocalExtra
 import com.pary.app.ui.ParyCard
+import com.pary.app.ui.ParyBarChart
+import com.pary.app.ui.ParyBarEntry
 import com.pary.app.ui.Ru
 import com.pary.app.ui.SectionHeader
 import com.pary.app.ui.ThinProgress
@@ -564,6 +566,37 @@ private fun androidx.compose.foundation.lazy.LazyListScope.attendanceSection() {
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+        }
+    }
+    item {
+        val today = java.time.LocalDate.now()
+        val trend = Logic.attendanceTrend(Store.attendance.values, today.minusDays(6), 7)
+        val chartEntries = trend.filter { it.total > 0 }.map { day ->
+            ParyBarEntry(
+                label = day.date.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM")),
+                value = (day.attendancePercent ?: 0.0).toFloat(),
+                valueLabel = "${(day.attendancePercent ?: 0.0).toInt()}%",
+                detail = "был ${day.present} · пропуск ${day.missed}",
+            )
+        }
+        ParyCard {
+            Text("Динамика за 7 дней", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(4.dp))
+            if (chartEntries.isEmpty()) {
+                Text(
+                    "График появится после первых отметок посещаемости за последние семь дней.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(
+                    "Доля посещённых пар по дням · ${chartEntries.size} дней с отметками",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                ParyBarChart(chartEntries, chartHeight = 112.dp)
             }
         }
     }
