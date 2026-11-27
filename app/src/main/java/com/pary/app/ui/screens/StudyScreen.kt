@@ -984,6 +984,38 @@ private fun androidx.compose.foundation.lazy.LazyListScope.gradebookSection(
             Text("Стандартная модель 30 / 30 / 40. Веса и шкалу можно адаптировать под правила твоего университета.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+    item {
+        val snapshots = Logic.gradebookGpaTrend(subjects, java.time.LocalDate.now(), 8)
+        val entries = snapshots.mapNotNull { point ->
+            point.gpa?.let { value ->
+                ParyBarEntry(
+                    label = Ru.dateShort(point.date),
+                    value = value.toFloat(),
+                    valueLabel = String.format(java.util.Locale.US, "%.2f", value),
+                    detail = "${point.completedSubjects} предм. · ${point.credits} ECTS",
+                )
+            }
+        }
+        ParyCard {
+            Text("История GPA · 8 недель", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "Расчёт по датам оценок. Учитываются только завершённые предметы и записи не позднее даты точки.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(8.dp))
+            if (entries.isEmpty()) {
+                Text(
+                    "История появится после того, как в журнале будет завершён хотя бы один предмет.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                ParyBarChart(entries, modifier = Modifier.fillMaxWidth(), chartHeight = 120.dp)
+            }
+        }
+    }
     if (subjects.isEmpty()) {
         item {
             ParyCard {

@@ -21,6 +21,14 @@ data class AttendanceDayStats(val date: LocalDate, val present: Int, val missed:
     val attendancePercent: Double? get() = if (total == 0) null else present * 100.0 / total
 }
 
+/** GPA snapshots reconstructed from assessment dates, not historical app-state captures. */
+data class GpaTrendPoint(
+    val date: LocalDate,
+    val gpa: Double?,
+    val completedSubjects: Int,
+    val credits: Int,
+)
+
 enum class TaskBucket { OVERDUE, TODAY, TOMORROW, LATER, DONE }
 
 /** Чистая логика без Android — её проверяют unit-тесты. */
@@ -215,5 +223,31 @@ object Logic {
         val credits = completed.sumOf { it.first.credits }
         if (credits <= 0) return null
         return completed.sumOf { (subject, percent) -> letterGrade(percent).second * subject.credits } / credits
+    }
+
+    /**
+     * Rebuilds weekly GPA snapshots from dated assessments. Only records on or before
+     * each snapshot date participate; unfinished subjects never contribute to GPA.
+     */
+    fun gradebookGpaTrend(
+        subjects: List<GradebookSubject>,
+        endDate: LocalDate,
+        weeks: Int,
+    ): List<GpaTrendPoint> {
+        if (weeks <= 0) return emptyList()
+        return (weeks - 1 downTo 0).map { weeksBack ->
+            val date = endDate.minusWeeks(weeksBack.toLong())
+            val asOfSubjects = subjects.map { subject ->
+                subject.copy(records = subject.records.filter { !it.date.isAfter(date) })
+            }
+            val completed = asOfSubjects.filter { gradebookFinal(it) != null }
+            val credits = completed.sumOf { it.credits.coerceAtLeast(0) }
+            GpaTrendPoint(
+                date = date,
+                gpa = weightedGpa(asOfSubjects),
+                completedSubjects = completed.size,
+                credits = credits,
+            )
+        }
     }
 }

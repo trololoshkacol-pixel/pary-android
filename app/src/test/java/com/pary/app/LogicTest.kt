@@ -224,6 +224,55 @@ class LogicTest {
     }
 
     @Test
+    fun gradebookGpaTrendUsesOnlyCompletedSubjectsAndDatedRecords() {
+        val firstDate = LocalDate.of(2026, 11, 1)
+        val finalDate = LocalDate.of(2026, 11, 15)
+
+        fun completedSubject(name: String, credits: Int, score: Double, date: LocalDate) =
+            com.pary.app.data.GradebookSubject(
+                subject = name,
+                credits = credits,
+                records = com.pary.app.data.AssessmentKind.entries.map { kind ->
+                    com.pary.app.data.AssessmentRecord(kind = kind, score = score, date = date)
+                },
+            )
+
+        val first = completedSubject("Математика", 3, 80.0, firstDate)
+        val second = completedSubject("История", 1, 95.0, finalDate)
+        val unfinished = com.pary.app.data.GradebookSubject(
+            subject = "Физика",
+            credits = 8,
+            records = listOf(
+                com.pary.app.data.AssessmentRecord(
+                    kind = com.pary.app.data.AssessmentKind.RATING1,
+                    score = 100.0,
+                    date = firstDate,
+                ),
+                com.pary.app.data.AssessmentRecord(
+                    kind = com.pary.app.data.AssessmentKind.RATING2,
+                    score = 100.0,
+                    date = firstDate,
+                ),
+            ),
+        )
+
+        val trend = Logic.gradebookGpaTrend(listOf(first, second, unfinished), finalDate, 3)
+        assertEquals(3, trend.size)
+        assertEquals(firstDate, trend.first().date)
+        assertEquals(1, trend[0].completedSubjects)
+        assertEquals(3, trend[0].credits)
+        assertEquals(Logic.letterGrade(80.0).second, trend[0].gpa ?: -1.0, 0.001)
+        assertEquals(1, trend[1].completedSubjects)
+        assertEquals(2, trend[2].completedSubjects)
+        assertEquals(4, trend[2].credits)
+        val expectedWeightedGpa = (
+            Logic.letterGrade(80.0).second * 3 + Logic.letterGrade(95.0).second
+        ) / 4.0
+        assertEquals(expectedWeightedGpa, trend[2].gpa ?: -1.0, 0.001)
+        assertEquals(emptyList<com.pary.app.data.GpaTrendPoint>(), Logic.gradebookGpaTrend(listOf(first), finalDate, 0))
+    }
+
+    @Test
     fun assessmentPercentNormalizesDifferentMaximumScores() {
         val record = com.pary.app.data.AssessmentRecord(score = 18.0, maxScore = 20.0)
         assertEquals(90.0, record.percent, 0.001)
