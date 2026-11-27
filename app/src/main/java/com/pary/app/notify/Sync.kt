@@ -81,17 +81,19 @@ object Sync {
                 setShowBadge(false)
                 setSound(null, null)
                 enableVibration(false)
-                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE
             },
         )
         nm.createNotificationChannel(
             NotificationChannel(CH_TASK, "Напоминания о задачах", NotificationManager.IMPORTANCE_HIGH).apply {
                 description = "Дедлайны и напоминания по учёбе"
                 enableVibration(true)
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE
             },
         )
         nm.createNotificationChannel(
             NotificationChannel(CH_ALARM, "Будильник", NotificationManager.IMPORTANCE_HIGH).apply {
+                lockscreenVisibility = Notification.VISIBILITY_PRIVATE
                 val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 setSound(
                     uri,
@@ -165,7 +167,15 @@ object Sync {
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setCategory(Notification.CATEGORY_STATUS)
-            .setVisibility(Notification.VISIBILITY_PUBLIC)
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                Notification.Builder(ctx, CH_STATUS)
+                    .setSmallIcon(android.R.drawable.ic_menu_my_calendar)
+                    .setContentTitle("Pary")
+                    .setContentText("Учебный статус")
+                    .setCategory(Notification.CATEGORY_STATUS)
+                    .build(),
+            )
             .setContentIntent(openApp(ctx))
         if (pct >= 0) builder.setProgress(100, pct, false)
         if (target != null) {
@@ -513,6 +523,15 @@ object Sync {
                 ).joinToString("\n"),
             ))
             .setCategory(Notification.CATEGORY_REMINDER)
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                Notification.Builder(ctx, CH_TASK)
+                    .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                    .setContentTitle("Pary")
+                    .setContentText("Новое учебное напоминание")
+                    .setCategory(Notification.CATEGORY_REMINDER)
+                    .build(),
+            )
             .setAutoCancel(true)
             .setContentIntent(open)
             .addAction(
@@ -578,6 +597,15 @@ object Sync {
             .setContentIntent(openApp(ctx))
             .setAutoCancel(true)
             .setCategory(Notification.CATEGORY_REMINDER)
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                Notification.Builder(ctx, CH_TASK)
+                    .setSmallIcon(android.R.drawable.ic_dialog_email)
+                    .setContentTitle("Pary")
+                    .setContentText("Новое предложение из чата")
+                    .setCategory(Notification.CATEGORY_REMINDER)
+                    .build(),
+            )
             .addAction(Notification.Action.Builder(null, "В задачи", addPi).build())
             .addAction(Notification.Action.Builder(null, "Не надо", skipPi).build())
         runCatching { nm.notify(code, b.build()) }
@@ -619,6 +647,15 @@ object Sync {
             .setContentTitle("Пора вставать")
             .setContentText(msg.ifBlank { "Пора на пары" })
             .setCategory(Notification.CATEGORY_ALARM)
+            .setVisibility(Notification.VISIBILITY_PRIVATE)
+            .setPublicVersion(
+                Notification.Builder(ctx, CH_ALARM)
+                    .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                    .setContentTitle("Pary")
+                    .setContentText("Будильник")
+                    .setCategory(Notification.CATEGORY_ALARM)
+                    .build(),
+            )
             .setTimeoutAfter(5 * 60_000L)
             .setContentIntent(off)
             .addAction(Notification.Action.Builder(null, "Выключить", off).build())
