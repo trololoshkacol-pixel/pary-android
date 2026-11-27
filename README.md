@@ -25,7 +25,7 @@ APK outputs:
 - `app/build/outputs/apk/debug/`
 - `app/build/outputs/apk/release/`
 
-GitHub Actions runs unit tests and builds both APK variants on pushes, pull requests and manual dispatches.
+GitHub Actions runs unit tests and builds both APK variants on pushes, pull requests and manual dispatches. Successful builds upload the debug APK as an Actions artifact. A GitHub Release is published only from `main` when all release-signing secrets are configured and the release APK passes `apksigner` verification; without signing secrets, no release is published.
 
 ## Release signing
 
