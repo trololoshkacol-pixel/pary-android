@@ -88,6 +88,29 @@ data class Note(
     val at: LocalDateTime = LocalDateTime.now(),
 )
 
+/** A completed focus interval, retained for weekly productivity history. */
+data class FocusSession(
+    val id: Long = newId(),
+    val completedAt: LocalDateTime = LocalDateTime.now(),
+    val minutes: Int = 25,
+) {
+    fun toJson(): JSONObject = JSONObject()
+        .put("id", id).put("at", completedAt.toString()).put("minutes", minutes)
+
+    companion object {
+        fun from(o: JSONObject): FocusSession? {
+            val completedAt = runCatching { LocalDateTime.parse(o.optString("at")) }.getOrNull() ?: return null
+            val minutes = o.optInt("minutes", 0)
+            if (minutes !in 1..240) return null
+            return FocusSession(
+                id = o.optLong("id", newId()),
+                completedAt = completedAt,
+                minutes = minutes,
+            )
+        }
+    }
+}
+
 // ---------- JSON ----------
 
 fun Lesson.toJson(): JSONObject = JSONObject()

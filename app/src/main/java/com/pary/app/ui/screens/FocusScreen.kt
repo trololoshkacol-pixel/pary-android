@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.pary.app.data.FocusLogic
 import com.pary.app.data.Lesson
 import com.pary.app.data.Store
 import com.pary.app.data.Task
@@ -83,10 +84,53 @@ fun FocusScreen(modifier: Modifier = Modifier) {
         }
         FocusTimerCard()
         DailyFocusGoalCard()
+        FocusHistoryCard()
         FreeWindowsCard()
         AttendanceRiskCard()
         WeekLoadCard()
         GradeGoalCard()
+    }
+}
+
+@Composable
+private fun FocusHistoryCard() {
+    val today = LocalDate.now()
+    val days = FocusLogic.weeklyTrend(Store.focusSessions, today.minusDays(6), 7)
+    val totalMinutes = days.sumOf { it.minutes }
+    val totalSessions = days.sumOf { it.sessions }
+    val entries = days.map { day ->
+        val hours = day.minutes / 60
+        val minutes = day.minutes % 60
+        val label = when {
+            day.minutes == 0 -> "—"
+            hours > 0 && minutes > 0 -> "${hours}ч${minutes}м"
+            hours > 0 -> "${hours}ч"
+            else -> "${minutes}м"
+        }
+        ParyBarEntry(
+            label = day.date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("ru")),
+            value = day.minutes.toFloat(),
+            valueLabel = label,
+            detail = if (day.sessions == 0) "" else "${day.sessions} сесс.",
+        )
+    }
+
+    FocusCard("Фокус за 7 дней") {
+        Text(
+            "${totalMinutes / 60} ч ${totalMinutes % 60} мин · ${totalSessions} сессий",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(8.dp))
+        if (totalSessions == 0) {
+            Text(
+                "Завершённые фокус-сессии появятся здесь. История сохраняется между днями и входит в резервную копию.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            ParyBarChart(entries, modifier = Modifier.fillMaxWidth(), chartHeight = 120.dp)
+        }
     }
 }
 
