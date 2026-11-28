@@ -3,27 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pary — Умный помощник для учёбы на Android</title>
-    <meta name="description" content="Pary — Android-приложение для студентов: расписание, оценки, задачи, фокус-таймер и синхронизация с Platonus.">
+    <title>Pary — Умный помощник для учёбы</title>
     <style>
-        :root {
-            --primary: #1a1a2e;
-            --accent: #e94560;
-            --accent-light: #ff6b81;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text: #1a1a2e;
-            --text-muted: #6c757d;
-            --border: #e9ecef;
-            --radius: 16px;
-            --shadow: 0 4px 24px rgba(0,0,0,0.06);
-            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #ec4899;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #64748b;
         }
 
         html {
@@ -31,631 +25,696 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--light);
+            color: var(--dark);
             overflow-x: hidden;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 0 24px;
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            opacity: 0.05;
+            animation: bgShift 20s ease infinite;
         }
 
-        /* ===== HEADER ===== */
+        @keyframes bgShift {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(180deg); }
+        }
+
+        /* Header */
         header {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.08);
             z-index: 1000;
+            transition: all 0.3s;
         }
 
-        header .container {
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            height: 64px;
+            align-items: center;
         }
 
         .logo {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 800;
-            color: var(--primary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: logoGlow 3s ease-in-out infinite;
         }
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: var(--accent);
-            border-radius: 8px;
+        @keyframes logoGlow {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 700;
+            padding: 100px 2rem 4rem;
+            position: relative;
+            overflow: hidden;
         }
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 28px;
-        }
-
-        nav a {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.95rem;
-            transition: color 0.2s;
-        }
-
-        nav a:hover {
-            color: var(--accent);
-        }
-
-        .header-btn {
-            padding: 8px 20px;
-            background: var(--accent);
-            color: #fff;
-            border-radius: 50px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: background 0.2s, transform 0.2s;
-        }
-
-        .header-btn:hover {
-            background: var(--accent-light);
-            transform: translateY(-1px);
-        }
-
-        /* ===== HERO ===== */
-        .hero {
-            padding: 140px 0 80px;
-            display: flex;
+        .hero-content {
+            max-width: 1200px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
             align-items: center;
-            gap: 60px;
         }
 
         .hero-text {
-            flex: 1;
+            animation: slideInLeft 1s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .hero-badge {
             display: inline-block;
-            background: #ffe0e6;
-            color: var(--accent);
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 6px 14px;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
             border-radius: 50px;
-            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         .hero h1 {
-            font-size: 3.2rem;
+            font-size: 4rem;
             font-weight: 800;
-            line-height: 1.15;
-            margin-bottom: 20px;
-            color: var(--primary);
-        }
-
-        .hero h1 span {
-            color: var(--accent);
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .hero p {
-            font-size: 1.15rem;
-            color: var(--text-muted);
-            margin-bottom: 32px;
-            max-width: 480px;
+            font-size: 1.25rem;
+            color: var(--gray);
+            margin-bottom: 2rem;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .hero-buttons {
             display: flex;
-            gap: 14px;
+            gap: 1rem;
             flex-wrap: wrap;
+            animation: fadeInUp 1s ease-out 0.6s both;
         }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 28px;
+            padding: 1rem 2rem;
             border-radius: 50px;
             text-decoration: none;
             font-weight: 600;
             font-size: 1rem;
-            transition: all 0.25s;
-            border: none;
-            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-primary {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(233,69,96,0.3);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
         }
 
         .btn-primary:hover {
-            background: var(--accent-light);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(233,69,96,0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.5);
         }
 
         .btn-secondary {
-            background: var(--card-bg);
-            color: var(--text);
-            border: 2px solid var(--border);
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--dark);
         }
 
         .btn-secondary:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            transform: translateY(-2px);
+            background: var(--dark);
+            color: white;
+            transform: translateY(-3px);
         }
 
         .hero-visual {
-            flex: 1;
-            display: flex;
-            justify-content: center;
+            animation: slideInRight 1s ease-out;
         }
 
-        .phone-frame {
-            width: 280px;
-            height: 560px;
-            background: var(--primary);
-            border-radius: 36px;
-            border: 6px solid #2a2a3e;
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .phone-mockup {
+            width: 300px;
+            height: 600px;
+            background: var(--dark);
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
             position: relative;
-            box-shadow: var(--shadow-lg);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
 
         .phone-screen {
             width: 100%;
             height: 100%;
-            background: linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 30px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #fff;
-            padding: 24px;
+            color: white;
             text-align: center;
+            padding: 2rem;
         }
 
-        .phone-screen .app-icon {
-            width: 72px;
-            height: 72px;
-            background: var(--accent);
-            border-radius: 18px;
+        .phone-icon {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            margin-bottom: 16px;
+            margin-bottom: 1rem;
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .phone-screen h3 {
-            font-size: 1.3rem;
-            margin-bottom: 8px;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .phone-screen p {
-            font-size: 0.85rem;
-            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            opacity: 0.8;
         }
 
-        .phone-notch {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 24px;
-            background: #2a2a3e;
-            border-radius: 0 0 16px 16px;
-        }
-
-        /* ===== FEATURES ===== */
+        /* Features Section */
         .features {
-            padding: 80px 0;
-            background: var(--card-bg);
+            padding: 6rem 2rem;
+            background: white;
+            position: relative;
         }
 
-        .section-label {
-            display: inline-block;
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--accent);
-            margin-bottom: 12px;
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
         }
 
-        .section-title {
-            font-size: 2.4rem;
+        .section-header h2 {
+            font-size: 3rem;
             font-weight: 800;
-            margin-bottom: 12px;
-            color: var(--primary);
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .section-subtitle {
-            font-size: 1.1rem;
-            color: var(--text-muted);
-            margin-bottom: 48px;
-            max-width: 560px;
+        .section-header p {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .features-grid {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 24px;
+            gap: 2rem;
         }
 
         .feature-card {
-            background: var(--bg);
-            border-radius: var(--radius);
-            padding: 32px;
-            transition: transform 0.25s, box-shadow 0.25s;
-            border: 1px solid var(--border);
+            background: white;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s;
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
         }
 
         .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
         }
 
         .feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.4rem;
-            margin-bottom: 20px;
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s;
         }
 
-        .feature-icon.red { background: #ffe0e6; }
-        .feature-icon.blue { background: #d6eaf8; }
-        .feature-icon.green { background: #d5f5e3; }
-        .feature-icon.purple { background: #e8daef; }
-        .feature-icon.orange { background: #fdebd0; }
-        .feature-icon.teal { background: #d1f2eb; }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
 
         .feature-card h3 {
-            font-size: 1.15rem;
+            font-size: 1.3rem;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 0.8rem;
         }
 
         .feature-card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
+            color: var(--gray);
+            line-height: 1.6;
         }
 
-        /* ===== TECH ===== */
+        /* Tech Stack */
         .tech {
-            padding: 80px 0;
+            padding: 6rem 2rem;
+            background: linear-gradient(135deg, var(--dark) 0%, #1e293b 100%);
+            color: white;
         }
 
         .tech-content {
-            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
             align-items: center;
-            gap: 60px;
         }
 
-        .tech-text {
-            flex: 1;
+        .tech-text h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
         }
 
         .tech-list {
             list-style: none;
-            margin-top: 24px;
         }
 
         .tech-list li {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            margin-bottom: 16px;
-            font-size: 1rem;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s;
+        }
+
+        .tech-list li:hover {
+            transform: translateX(10px);
         }
 
         .tech-list li::before {
             content: '✓';
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 24px;
-            height: 24px;
-            min-width: 24px;
-            background: #d5f5e3;
-            color: #27ae60;
-            border-radius: 50%;
-            font-size: 0.8rem;
             font-weight: 700;
-        }
-
-        .tech-visual {
-            flex: 1;
-            display: flex;
-            justify-content: center;
+            flex-shrink: 0;
         }
 
         .code-block {
-            background: var(--primary);
-            color: #e0e0e0;
-            border-radius: var(--radius);
-            padding: 28px;
-            font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            line-height: 1.7;
-            box-shadow: var(--shadow-lg);
-            max-width: 420px;
-            width: 100%;
-            overflow-x: auto;
+            background: rgba(0,0,0,0.3);
+            padding: 2rem;
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .code-block .comment { color: #6c757d; }
-        .code-block .keyword { color: #e94560; }
-        .code-block .string { color: #a8e6cf; }
-        .code-block .function { color: #82c9ff; }
+        .code-block .comment { color: #64748b; }
+        .code-block .keyword { color: #ec4899; }
+        .code-block .function { color: #60a5fa; }
 
-        /* ===== OPEN SOURCE ===== */
-        .opensource {
-            padding: 80px 0;
-            background: var(--primary);
-            color: #fff;
+        /* CTA Section */
+        .cta {
+            padding: 6rem 2rem;
             text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
         }
 
-        .opensource .section-label {
-            color: var(--accent-light);
+        .cta::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 20s linear infinite;
         }
 
-        .opensource .section-title {
-            color: #fff;
+        @keyframes moveGrid {
+            from { transform: translate(0, 0); }
+            to { transform: translate(50px, 50px); }
         }
 
-        .opensource p {
-            color: rgba(255,255,255,0.65);
-            font-size: 1.1rem;
-            max-width: 560px;
-            margin: 0 auto 32px;
+        .cta-content {
+            position: relative;
+            z-index: 1;
         }
 
-        .opensource-buttons {
+        .cta h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .cta p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .cta-buttons {
             display: flex;
-            gap: 14px;
+            gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
         }
 
         .btn-white {
-            background: #fff;
+            background: white;
             color: var(--primary);
         }
 
         .btn-white:hover {
-            background: #f0f0f0;
-            transform: translateY(-2px);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
         }
 
-        .btn-ghost {
+        .btn-outline {
             background: transparent;
-            color: #fff;
-            border: 2px solid rgba(255,255,255,0.3);
+            color: white;
+            border: 2px solid white;
         }
 
-        .btn-ghost:hover {
-            border-color: #fff;
-            transform: translateY(-2px);
+        .btn-outline:hover {
+            background: white;
+            color: var(--primary);
         }
 
-        /* ===== FOOTER ===== */
+        /* Footer */
         footer {
-            padding: 32px 0;
+            padding: 2rem;
             text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            border-top: 1px solid var(--border);
+            background: var(--dark);
+            color: rgba(255,255,255,0.6);
         }
 
         footer a {
-            color: var(--accent);
+            color: var(--primary);
             text-decoration: none;
+            transition: color 0.3s;
         }
 
         footer a:hover {
-            text-decoration: underline;
+            color: var(--accent);
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s, transform 0.6s;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile responsive */
         @media (max-width: 768px) {
-            .hero {
-                flex-direction: column;
-                text-align: center;
-                padding: 110px 0 60px;
-                gap: 40px;
+            .hero-content,
+            .tech-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
             }
 
             .hero h1 {
-                font-size: 2.2rem;
+                font-size: 2.5rem;
             }
 
-            .hero p {
-                margin-left: auto;
-                margin-right: auto;
+            .section-header h2,
+            .cta h2 {
+                font-size: 2rem;
             }
 
-            .hero-buttons {
-                justify-content: center;
-            }
-
-            nav ul {
+            .nav-links {
                 display: none;
             }
 
-            .section-title {
-                font-size: 1.8rem;
-            }
-
-            .tech-content {
-                flex-direction: column;
-            }
-
-            .phone-frame {
-                width: 240px;
-                height: 480px;
+            .phone-mockup {
+                width: 250px;
+                height: 500px;
             }
         }
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
 
-    <!-- Header -->
     <header>
-        <div class="container">
-            <a href="#" class="logo">
-                <div class="logo-icon">P</div>
-                Pary
-            </a>
-            <nav>
-                <ul>
-                    <li><a href="#features">Возможности</a></li>
-                    <li><a href="#tech">Технологии</a></li>
-                    <li><a href="https://github.com/trololoshkacol-pixel/pary-android" target="_blank">GitHub</a></li>
-                </ul>
-            </nav>
-            <a href="https://github.com/trololoshkacol-pixel/pary-android/releases" target="_blank" class="header-btn">Скачать APK</a>
-        </div>
+        <nav>
+            <div class="logo">Pary</div>
+            <ul class="nav-links">
+                <li><a href="#features">Возможности</a></li>
+                <li><a href="#tech">Технологии</a></li>
+                <li><a href="https://github.com/trololoshkacol-pixel/pary-android" target="_blank">GitHub</a></li>
+            </ul>
+        </nav>
     </header>
 
-    <!-- Hero -->
-    <section class="hero container">
-        <div class="hero-text">
-            <div class="hero-badge">🎓 Для студентов</div>
-            <h1>Вся учёба —<br>в <span>одном</span> приложении</h1>
-            <p>Pary — это умный компаньон для учёбы на Android. Расписание, оценки, задачи, фокус-таймер и синхронизация с Platonus. Всё, что нужно студенту.</p>
-            <div class="hero-buttons">
-                <a href="https://github.com/trololoshkacol-pixel/pary-android/releases" target="_blank" class="btn btn-primary">⬇ Скачать APK</a>
-                <a href="https://github.com/trololoshkacol-pixel/pary-android" target="_blank" class="btn btn-secondary">⭐ GitHub</a>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <div class="phone-frame">
-                <div class="phone-notch"></div>
-                <div class="phone-screen">
-                    <div class="app-icon">P</div>
-                    <h3>Pary</h3>
-                    <p>Твой помощник в учёбе</p>
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">🎓 Для студентов</div>
+                <h1>Вся учёба в одном приложении</h1>
+                <p>Pary — умный компаньон для учёбы. Расписание, оценки, задачи и синхронизация с Platonus. Всё, что нужно студенту.</p>
+                <div class="hero-buttons">
+                    <a href="https://github.com/trololoshkacol-pixel/pary-android/releases" target="_blank" class="btn btn-primary">⬇ Скачать APK</a>
+                    <a href="https://github.com/trololoshkacol-pixel/pary-android" target="_blank" class="btn btn-secondary">⭐ GitHub</a>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Features -->
-    <section class="features" id="features">
-        <div class="container">
-            <div class="section-label">Возможности</div>
-            <h2 class="section-title">Всё для продуктивной учёбы</h2>
-            <p class="section-subtitle">Pary объединяет все инструменты, которые нужны современному студенту, в одном красивом приложении.</p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon red">📅</div>
-                    <h3>Расписание и обзор дня</h3>
-                    <p>Ежедневный обзор пар, занятий и дедлайнов. Всегда знай, что дальше.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon blue">📊</div>
-                    <h3>Оценки и посещаемость</h3>
-                    <p>Отслеживай свои оценки, записи об учёбе и посещаемость в реальном времени.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon green">✅</div>
-                    <h3>Задачи и фокус</h3>
-                    <p>Встроенный менеджер задач и фокус-таймер для продуктивной работы.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon purple">🔄</div>
-                    <h3>Синхронизация с Platonus</h3>
-                    <p>Автоматическое подключение к Platonus LMS и фоновая синхронизация данных.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon orange">🔔</div>
-                    <h3>Уведомления и виджеты</h3>
-                    <p>Виджеты на домашний экран и умные уведомления — ничего не пропустишь.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon teal">🎨</div>
-                    <h3>Swiss Modern дизайн</h3>
-                    <p>Чистый, минималистичный интерфейс в стиле Swiss Modern. Приятно пользоваться.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Tech -->
-    <section class="tech" id="tech">
-        <div class="container">
-            <div class="tech-content">
-                <div class="tech-text">
-                    <div class="section-label">Технологии</div>
-                    <h2 class="section-title">Современный стек</h2>
-                    <p class="section-subtitle" style="margin-bottom:0">Pary построен на самых актуальных Android-технологиях.</p>
-                    <ul class="tech-list">
-                        <li><strong>Kotlin</strong> — основной язык разработки</li>
-                        <li><strong>Jetpack Compose</strong> — современный декларативный UI</li>
-                        <li><strong>Локальное хранение</strong> — данные всегда доступны офлайн</li>
-                        <li><strong>GitHub Actions</strong> — автоматическая сборка и тестирование</li>
-                        <li><strong>Открытый исходный код</strong> — полный доступ к коду на GitHub</li>
-                    </ul>
-                </div>
-                <div class="tech-visual">
-                    <div class="code-block">
-                        <span class="comment">// Pary Android</span><br>
-                        <span class="comment">// Kotlin + Jetpack Compose</span><br><br>
-                        <span class="keyword">@Composable</span><br>
-                        <span class="keyword">fun</span> <span class="function">ParyApp</span>() {<br>
-                        &nbsp;&nbsp;<span class="keyword">val</span> theme = <span class="function">swissModernTheme</span>()<br>
-                        &nbsp;&nbsp;<span class="keyword">val</span> schedule = <span class="function">rememberSchedule</span>()<br><br>
-                        &nbsp;&nbsp;<span class="function">Scaffold</span> {<br>
-                        &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">DailyOverview</span>(schedule)<br>
-                        &nbsp;&nbsp;}<br>
-                        }
+            <div class="hero-visual">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <div class="phone-icon">P</div>
+                        <h3>Pary</h3>
+                        <p>Твой помощник в учёбе</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Open Source -->
-    <section class="opensource">
-        <div class="container">
-            <div class="section-label">Open Source</div>
-            <h2 class="section-title">Свободный и открытый проект</h2>
-            <p>Pary — это open-source приложение. Изучай код, предлагай улучшения, создавай pull-реквесты или просто ставь звёздочку на GitHub ⭐</p>
-            <div class="opensource-buttons">
-                <a href="https://github.com/trololoshkacol-pixel/pary-android" target="_blank" class="btn btn-white">📂 Репозиторий</a>
-                <a href="https://github.com/trololoshkacol-pixel/pary-android/releases" target="_blank" class="btn btn-ghost">⬇ Последняя версия</a>
+    <section class="features" id="features">
+        <div class="section-header fade-in">
+            <h2>Возможности</h2>
+            <p>Всё для продуктивной учёбы в одном месте</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📅</div>
+                <h3>Расписание</h3>
+                <p>Ежедневный обзор пар и занятий. Всегда знай, что дальше.</p>
             </div>
-        </di
+            <div class="feature-card fade-in">
+                <div class="feature-icon">📊</div>
+                <h3>Оценки</h3>
+                <p>Отслеживай оценки и посещаемость в реальном времени.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">✅</div>
+                <h3>Задачи</h3>
+                <p>Менеджер задач и фокус-таймер для продуктивной работы.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔄</div>
+                <h3>Platonus</h3>
+                <p>Автоматическая синхронизация с Platonus LMS.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🔔</div>
+                <h3>Уведомления</h3>
+                <p>Виджеты и умные уведомления — ничего не пропустишь.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="feature-icon">🎨</div>
+                <h3>Дизайн</h3>
+                <p>Чистый минималистичный интерфейс Swiss Modern.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="tech" id="tech">
+        <div class="tech-content">
+            <div class="tech-text fade-in">
+                <h2>Современные технологии</h2>
+                <ul class="tech-list">
+                    <li>Kotlin — основной язык</li>
+                    <li>Jetpack Compose — современный UI</li>
+                    <li>Локальное хранение данных</li>
+                    <li>GitHub Actions — CI/CD</li>
+                    <li>Open Source — полный доступ к коду</li>
+                </ul>
+            </div>
+            <div class="code-block fade-in">
+                <span class="comment">// Pary Android</span><br
