@@ -11,9 +11,11 @@
   <meta property="og:description" content="Расписание, оценки, задачи и фокус — в одном спокойном пространстве.">
   <meta name="twitter:card" content="summary">
   <title>Pary — собери учёбу в систему</title>
-  <link rel="icon" href="app/src/main/res/drawable/ic_launcher_foreground.xml" type="image/svg+xml">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
     :root{color-scheme:light;--paper:#f5f4f0;--surface:#fff;--ink:#171916;--muted:#777b73;--line:#e5e5df;--accent:#e5484d;--accent-dark:#bd3038;--soft:#f8e9e7;--green:#27845a;--blue:#4778b8;--amber:#b7791f;--shadow:0 24px 70px rgba(25,29,23,.10);--radius:28px;--max:1200px}
     [data-theme="dark"]{color-scheme:dark;--paper:#101210;--surface:#191d19;--ink:#f2f3ed;--muted:#a1a69d;--line:#30362f;--soft:#352323;--shadow:0 24px 70px rgba(0,0,0,.28)}
     *{box-sizing:border-box}
@@ -247,7 +249,7 @@
               <div class="phone-top"><div class="phone-brand">Pary<span style="color:#e5484d">.</span></div><div class="phone-avatar">А</div></div>
               <div class="phone-greeting">ТВОЙ УЧЕБНЫЙ ДЕНЬ</div>
               <div class="phone-heading">Всё по плану.</div>
-              <div class="phone-date">СРЕДА · 26 НОЯБРЯ</div>
+              <div class="phone-date" id="phone-date">ТВОЯ ДАТА</div>
               <div class="phone-next">
                 <div class="phone-next-label">Следующая пара · пример</div>
                 <div class="phone-next-title">Основы программирования</div>
@@ -419,7 +421,8 @@
       const themeButton=document.getElementById('theme-toggle');
       const menuButton=document.getElementById('menu-toggle');
       const menu=document.getElementById('nav-links');
-      const savedTheme=localStorage.getItem('pary-theme');
+      let savedTheme=null;
+      try{savedTheme=localStorage.getItem('pary-theme');}catch(error){}
       if(savedTheme==='dark'){root.dataset.theme='dark';}
       function updateThemeButton(){
         const dark=root.dataset.theme==='dark';
@@ -431,7 +434,7 @@
       updateThemeButton();
       themeButton.addEventListener('click',function(){
         root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
-        localStorage.setItem('pary-theme',root.dataset.theme);
+        try{localStorage.setItem('pary-theme',root.dataset.theme);}catch(error){}
         document.querySelector('meta[name="theme-color"]').content=root.dataset.theme==='dark'?'#101210':'#f5f4f0';
         updateThemeButton();
       });
@@ -447,8 +450,16 @@
         schedule:['Неделя без неожиданностей.','Смотри учебные дни, время занятий и аудитории. Расписание можно вести самостоятельно или синхронизировать с Platonus.'],
         grades:['Прогресс, который можно измерить.','Собирай оценки, учитывай веса работ и экзамена, анализируй GPA и посещаемость.']
       };
-      const tabs=document.querySelectorAll('.preview-tab');
-      tabs.forEach(function(tab){
+      const tabs=Array.from(document.querySelectorAll('.preview-tab'));
+      tabs.forEach(function(tab,index){
+        tab.addEventListener('keydown',function(event){
+          if(event.key==='ArrowRight'||event.key==='ArrowLeft'){
+            event.preventDefault();
+            const direction=event.key==='ArrowRight'?1:-1;
+            const next=tabs[(index+direction+tabs.length)%tabs.length];
+            next.focus();next.click();
+          }
+        });
         tab.addEventListener('click',function(){
           const name=tab.dataset.view;
           tabs.forEach(function(item){item.setAttribute('aria-selected',String(item===tab));});
@@ -458,6 +469,8 @@
         });
       });
       document.getElementById('year').textContent=new Date().getFullYear();
+      const phoneDate=document.getElementById('phone-date');
+      if(phoneDate){const now=new Date();const day=new Intl.DateTimeFormat('ru-RU',{weekday:'long'}).format(now);const date=new Intl.DateTimeFormat('ru-RU',{day:'numeric',month:'long'}).format(now);phoneDate.textContent=(day+' · '+date).toLocaleUpperCase('ru-RU');}
       const revealItems=document.querySelectorAll('.reveal');
       if('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){
         const observer=new IntersectionObserver(function(entries){
