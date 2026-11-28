@@ -34,7 +34,17 @@ class TaskReceiver : BroadcastReceiver() {
 
 class PollReceiver : BroadcastReceiver() {
     override fun onReceive(ctx: Context, intent: Intent) {
-        Thread { runCatching { Sync.pollTelegram(ctx.applicationContext) } }.start()
+        val constraints = androidx.work.Constraints.Builder()
+            .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+            .build()
+        val request = androidx.work.OneTimeWorkRequestBuilder<TelegramPollWorker>()
+            .setConstraints(constraints)
+            .build()
+        androidx.work.WorkManager.getInstance(ctx.applicationContext).enqueueUniqueWork(
+            TelegramPollWorker.UNIQUE_WORK_NAME,
+            androidx.work.ExistingWorkPolicy.KEEP,
+            request,
+        )
     }
 }
 
