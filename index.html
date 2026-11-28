@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{color-scheme:light;--paper:#f5f4f0;--surface:#fff;--ink:#171916;--muted:#777b73;--line:#e5e5df;--accent:#e5484d;--accent-dark:#bd3038;--soft:#f8e9e7;--green:#27845a;--blue:#4778b8;--amber:#b7791f;--shadow:0 24px 70px rgba(25,29,23,.10);--radius:28px;--max:1200px}
+    :root{color-scheme:light;--paper:#f5f4f0;--surface:#fff;--ink:#171916;--muted:#666b63;--line:#e5e5df;--accent:#e5484d;--accent-dark:#bd3038;--soft:#f8e9e7;--green:#1f6848;--blue:#4778b8;--amber:#b7791f;--shadow:0 24px 70px rgba(25,29,23,.10);--radius:28px;--max:1200px}
     [data-theme="dark"]{color-scheme:dark;--paper:#101210;--surface:#191d19;--ink:#f2f3ed;--muted:#a1a69d;--line:#30362f;--soft:#352323;--shadow:0 24px 70px rgba(0,0,0,.28)}
     *{box-sizing:border-box}
     html{scroll-behavior:smooth;scroll-padding-top:100px}
@@ -43,8 +43,8 @@
     .menu-toggle{display:none}
     .button{min-height:48px;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;border:1px solid transparent;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:-.01em;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s}
     .button:hover{transform:translateY(-2px)}
-    .button-primary{background:var(--accent);color:#fff;box-shadow:0 9px 22px rgba(229,72,77,.2)}
-    .button-primary:hover{background:var(--accent-dark);box-shadow:0 13px 28px rgba(229,72,77,.28)}
+    .button-primary{background:var(--accent-dark);color:#fff;box-shadow:0 9px 22px rgba(229,72,77,.2)}
+    .button-primary:hover{background:#9f2730;box-shadow:0 13px 28px rgba(229,72,77,.28)}
     .button-secondary{background:var(--surface);border-color:var(--line);color:var(--ink)}
     .button-secondary:hover{border-color:var(--ink)}
     .button svg{width:16px;height:16px}
@@ -72,10 +72,10 @@
     .phone-top{display:flex;justify-content:space-between;align-items:center;margin-top:25px}
     .phone-brand{font-size:19px;font-weight:800;letter-spacing:-.08em}
     .phone-avatar{width:29px;height:29px;border-radius:50%;display:grid;place-items:center;background:#e8e6df;color:#343832;font-size:10px;font-weight:800}
-    .phone-greeting{margin-top:24px;font-size:10px;color:#777b73}
+    .phone-greeting{margin-top:24px;font-size:10px;color:#666b63}
     .phone-heading{margin-top:2px;font-size:23px;font-weight:800;letter-spacing:-.07em}
     .phone-date{margin-top:3px;font:10px "DM Mono",monospace;color:#777b73}
-    .phone-next{margin-top:18px;padding:15px;border-radius:17px;background:#e5484d;color:white;box-shadow:0 9px 18px rgba(229,72,77,.18)}
+    .phone-next{margin-top:18px;padding:15px;border-radius:17px;background:#bd3038;color:white;box-shadow:0 9px 18px rgba(229,72,77,.18)}
     .phone-next-label{font:9px "DM Mono",monospace;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
     .phone-next-title{margin-top:7px;font-size:17px;font-weight:800;letter-spacing:-.04em}
     .phone-next-meta{display:flex;gap:10px;margin-top:7px;font-size:9px;opacity:.86}
@@ -86,9 +86,9 @@
     .phone-lesson strong{display:block;font-size:10px}.phone-lesson small{display:block;margin-top:3px;font-size:8px;color:#777b73}
     .phone-dot{width:7px;height:7px;border-radius:50%;background:#27845a}
     .phone-bottom{display:flex;justify-content:space-around;margin-top:17px;padding-top:12px;border-top:1px solid #e3e2dc}
-    .phone-nav-item{display:grid;justify-items:center;gap:4px;color:#969990;font-size:7px}
+    .phone-nav-item{display:grid;justify-items:center;gap:4px;color:#666b63;font-size:7px}
     .phone-nav-item b{font-size:13px;font-weight:500}
-    .phone-nav-item.active{color:#e5484d}
+    .phone-nav-item.active{color:#bd3038}
     .float-card{position:absolute;z-index:3;display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line);border-radius:17px;background:var(--surface);box-shadow:var(--shadow);animation:float 6s ease-in-out infinite}
     .float-card.one{top:105px;right:-4px}.float-card.two{bottom:94px;left:-16px;animation-delay:-2.5s}
     .float-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:11px;background:var(--soft);color:var(--accent)}
@@ -117,7 +117,7 @@
     .demo-window{height:100%;min-height:354px;padding:23px;border:1px solid #d9d8d0;border-radius:19px;background:#f9f8f4;box-shadow:0 15px 45px rgba(20,24,18,.07)}
     .demo-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:17px;border-bottom:1px solid #e8e7e0}
     .demo-brand{font-size:16px;font-weight:800;letter-spacing:-.07em}.demo-pill{padding:6px 9px;border-radius:999px;background:#f8e9e7;color:#bd3038;font:9px "DM Mono",monospace}
-    .demo-title{margin-top:21px;font-size:23px;font-weight:800;letter-spacing:-.07em}.demo-sub{margin-top:4px;color:#85877f;font-size:10px}
+    .demo-title{margin-top:21px;font-size:23px;font-weight:800;letter-spacing:-.07em}.demo-sub{margin-top:4px;color:#686c64;font-size:10px}
     .demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:19px}
     .demo-card{padding:15px;border:1px solid #e8e7e0;border-radius:14px;background:#fff}
     .demo-card small{display:block;color:#85877f;font-size:9px}.demo-card strong{display:block;margin-top:7px;font-size:19px;letter-spacing:-.06em}.demo-card em{font-style:normal;color:#27845a;font-size:9px}
@@ -176,7 +176,7 @@
     details[open] summary:after{content:"−";transform:rotate(180deg)}
     details p{max-width:620px;margin:-3px 45px 20px 0;color:var(--muted);font-size:12px;line-height:1.8}
     .final-cta{padding:0 0 100px}
-    .cta-card{position:relative;display:flex;align-items:center;justify-content:space-between;gap:35px;padding:52px;border-radius:30px;background:var(--accent);color:#fff;overflow:hidden}
+    .cta-card{position:relative;display:flex;align-items:center;justify-content:space-between;gap:35px;padding:52px;border-radius:30px;background:var(--accent-dark);color:#fff;overflow:hidden}
     .cta-card:after{content:"P";position:absolute;right:18%;top:-130px;font-size:360px;font-weight:800;letter-spacing:-.15em;line-height:1;color:rgba(255,255,255,.08);pointer-events:none}
     .cta-card .eyebrow{color:rgba(255,255,255,.75)}.cta-card .eyebrow:before{background:#fff;box-shadow:0 0 0 5px rgba(255,255,255,.15)}
     .cta-card h2{position:relative;z-index:1;max-width:600px;margin:15px 0 10px;font-size:clamp(34px,5vw,57px);line-height:1;letter-spacing:-.08em}
